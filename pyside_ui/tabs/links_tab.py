@@ -1,0 +1,243 @@
+# pyside_ui/links_tab.py
+from __future__ import annotations
+
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from PySide6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox,
+    QTableWidget, QTableWidgetItem, QPushButton, QHeaderView
+)
+
+from pyside_ui.widgets import Card
+
+
+def _small_btn_qss(theme: dict) -> str:
+    bg = theme.get("btn_bg", "#2B2B2B")
+    hover = theme.get("btn_hover", "#333333")
+    text = theme.get("text", "#FFFFFF")
+    border = theme.get("card_border", "#3A3A3A")
+    return f"""
+        QPushButton {{
+            background: {bg};
+            color: {text};
+            border: 1px solid {border};
+            border-radius: 14px;
+            padding: 8px 14px;
+            min-height: 36px;
+        }}
+        QPushButton:hover {{
+            background: {hover};
+        }}
+        QPushButton:pressed {{
+            background: {hover};
+        }}
+        QPushButton:disabled {{
+            opacity: 0.55;
+        }}
+    """
+
+
+def _inputs_qss(theme: dict) -> str:
+    bg = theme.get("btn_bg", "#2B2B2B")
+    hover = theme.get("btn_hover", "#333333")
+    text = theme.get("text", "#FFFFFF")
+    border = theme.get("card_border", "#3A3A3A")
+    accent = theme.get("orange", "#FF9A2E")
+
+    return f"""
+        QLineEdit {{
+            background: {bg};
+            color: {text};
+            border: 1px solid {border};
+            border-radius: 14px;
+            padding: 8px 12px;
+            min-height: 36px;
+            selection-background-color: {accent};
+        }}
+        QLineEdit:focus {{
+            border: 1px solid {accent};
+        }}
+
+        QComboBox {{
+            background: {bg};
+            color: {text};
+            border: 1px solid {border};
+            border-radius: 14px;
+            padding: 8px 12px;
+            min-height: 36px;
+        }}
+        QComboBox:hover {{
+            background: {hover};
+        }}
+        QComboBox::drop-down {{
+            border: 0;
+            width: 28px;
+        }}
+        QComboBox QAbstractItemView {{
+            background: {bg};
+            color: {text};
+            border: 1px solid {border};
+            selection-background-color: {accent};
+        }}
+    """
+
+
+def _table_qss(theme: dict) -> str:
+    bg = theme.get("card_bg", "#202020")
+    text = theme.get("text", "#FFFFFF")
+    border = theme.get("card_border", "#3A3A3A")
+    hover = theme.get("btn_hover", "#333333")
+    accent = theme.get("orange", "#FF9A2E")
+    muted = theme.get("muted", "#B0B0B0")
+
+    return f"""
+        QTableWidget {{
+            background: {bg};
+            color: {text};
+            border: 1px solid {border};
+            border-radius: 16px;
+            gridline-color: {border};
+            padding: 6px;
+
+            /* Evita el contorno de foco “viejo” */
+            outline: 0;
+        }}
+
+        /* Selección prolija y consistente por celda (y como estás en SelectRows, se ve fila completa) */
+        QTableWidget::item:selected {{
+            background: {accent};
+            color: #111111;
+        }}
+        QTableWidget::item:selected:active {{
+            background: {accent};
+            color: #111111;
+        }}
+
+        /* Quita el focus-rect que genera ese “pill” raro */
+        QTableWidget::item:focus {{
+            outline: none;
+        }}
+              
+        QHeaderView::section {{
+            background: transparent;
+            color: {muted};
+            border: 0;
+            border-bottom: 1px solid {border};
+            padding: 8px 10px;
+            font-weight: 600;
+        }}
+
+        QTableWidget::item {{
+            padding: 8px 10px;
+            border: 0;
+        }}
+
+        QTableWidget::item:hover {{
+            background: {hover};
+        }}
+
+        QTableCornerButton::section {{
+            background: transparent;
+            border: 0;
+        }}
+    """
+
+
+class LinksTab(QWidget):
+    def __init__(self, theme: dict, parent=None):
+        super().__init__(parent)
+        self._theme = theme or {}
+
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(0, 0, 0, 0)
+        lay.setSpacing(0)
+
+        self.card = Card("Links")
+        lay.addWidget(self.card, 0, Qt.AlignTop)
+
+        # --- Fila filtros ---
+        row = QHBoxLayout()
+        row.setSpacing(10)
+
+        lbl = QLabel("Filtrar")
+        lbl.setFont(QFont("Segoe UI", 10))
+        lbl.setStyleSheet(f"""
+            QLabel {{
+                color: {self._theme.get("muted", "#B0B0B0")};
+                background: transparent;
+                padding-left: 2px;
+            }}
+        """)
+        row.addWidget(lbl, 0, Qt.AlignVCenter)
+
+        self.ed_filter = QLineEdit()
+        self.ed_filter.setPlaceholderText("Buscar por nombre o URL…")
+        row.addWidget(self.ed_filter, 1)
+
+        self.cmb_group = QComboBox()
+        self.cmb_group.addItems(["Todos"])  # UI pura por ahora
+        self.cmb_group.setFixedWidth(160)
+        row.addWidget(self.cmb_group, 0)
+
+        self.card.grid.addLayout(row, 0, 0, 1, 2)
+
+        # --- Tabla ---
+        self.table = QTableWidget(0, 2)
+        self.table.setHorizontalHeaderLabels(["Nombre", "URL"])
+        self.table.verticalHeader().setVisible(False)
+        self.table.setShowGrid(False)
+        self.table.setAlternatingRowColors(False)
+        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setSelectionMode(QTableWidget.SingleSelection)
+        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+
+        hdr = self.table.horizontalHeader()
+        hdr.setStretchLastSection(True)
+        hdr.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        hdr.setMinimumSectionSize(140)
+
+        self.card.grid.addWidget(self.table, 1, 0, 1, 2)
+
+        # --- Botonera ---
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(10)
+        btn_row.addStretch(1)
+
+        self.btn_open = QPushButton("Abrir")
+        self.btn_copy = QPushButton("Copiar URL")
+        btn_row.addWidget(self.btn_open, 0)
+        btn_row.addWidget(self.btn_copy, 0)
+
+        self.card.grid.addLayout(btn_row, 2, 0, 1, 2)
+
+        # Estilos
+        self.set_theme(self._theme)
+
+        # Demo visual (solo UI)
+        self._seed_demo()
+
+    def _seed_demo(self):
+        demo = [
+            ("Manual App Mobile", "https://cdst-ar.github.io/ST/appmobile"),
+            ("Instructivos contadores/ST", "https://sites.google.com/…/calendarict"),
+            ("Manuales Impresoras", "https://drive.google.com/drive/folders/…"),
+            ("Envios Credifin", "https://docs.google.com/spreadsheets/…"),
+        ]
+        self.table.setRowCount(len(demo))
+        for r, (name, url) in enumerate(demo):
+            self.table.setItem(r, 0, QTableWidgetItem(name))
+            self.table.setItem(r, 1, QTableWidgetItem(url))
+
+    def set_theme(self, theme: dict) -> None:
+        self._theme = theme or {}
+        self.card.set_theme(self._theme)
+
+        qss_inputs = _inputs_qss(self._theme)
+        self.ed_filter.setStyleSheet(qss_inputs)
+        self.cmb_group.setStyleSheet(qss_inputs)
+
+        self.table.setStyleSheet(_table_qss(self._theme))
+
+        btn_qss = _small_btn_qss(self._theme)
+        self.btn_open.setStyleSheet(btn_qss)
+        self.btn_copy.setStyleSheet(btn_qss)
