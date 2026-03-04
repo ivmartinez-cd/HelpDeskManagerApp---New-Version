@@ -5,7 +5,7 @@ from typing import Optional
 
 from PySide6 import QtWidgets, QtCore, QtGui
 
-from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, warn
+from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, get_theme, warn
 
 
 @dataclass(frozen=True)
@@ -16,7 +16,16 @@ class Db3CsvParams:
 
 
 class Db3CsvParamsDialog(BaseProDialog):
-    def __init__(self, parent: QtWidgets.QWidget, default_out_dir: str | None = None):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget,
+        default_out_dir: str | None = None,
+        *,
+        default_fecha: str | None = None,
+        default_nombre_base: str | None = None,
+        default_carpeta: str | None = None,
+        theme: Optional[dict] = None,
+    ):
         super().__init__(parent, "Parámetros DB3 → CSV", "Configuración de salida", w=640)
 
         self._result: Optional[Db3CsvParams] = None
@@ -31,18 +40,23 @@ class Db3CsvParamsDialog(BaseProDialog):
         self.ed_fecha = QtWidgets.QLineEdit()
         self.ed_fecha.setPlaceholderText("DD/MM/AAAA (opcional)")
         self.ed_fecha.setClearButtonEnabled(True)
+        if default_fecha:
+            self.ed_fecha.setText(default_fecha)
 
         # Nombre base
         self.ed_nombre = QtWidgets.QLineEdit()
         self.ed_nombre.setPlaceholderText("Ej: Citrusvil (sin _AutoCSV ni período)")
         self.ed_nombre.setClearButtonEnabled(True)
+        if default_nombre_base:
+            self.ed_nombre.setText(default_nombre_base)
 
-        # Carpeta salida + picker
+        # Carpeta salida + picker (default_carpeta tiene prioridad sobre default_out_dir)
         self.ed_carpeta = QtWidgets.QLineEdit()
         self.ed_carpeta.setPlaceholderText("Carpeta destino (opcional)")
         self.ed_carpeta.setClearButtonEnabled(True)
-        if default_out_dir:
-            self.ed_carpeta.setText(default_out_dir)
+        carpeta_prefill = default_carpeta or default_out_dir
+        if carpeta_prefill:
+            self.ed_carpeta.setText(carpeta_prefill)
 
         btn_pick = QtWidgets.QPushButton("Elegir…")
         btn_pick.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
@@ -82,8 +96,9 @@ class Db3CsvParamsDialog(BaseProDialog):
         self.root_layout.addSpacing(6)
         self.root_layout.addLayout(row_btns)
 
-        # Style
-        apply_dialog_style(self)
+        # Style: theme explícito tiene prioridad; si no, se obtiene del parent
+        theme_to_apply = theme if theme else get_theme(parent)
+        apply_dialog_style(self, theme_to_apply)
 
     def _pick_folder(self) -> None:
         start = self.ed_carpeta.text().strip() or ""
@@ -132,8 +147,23 @@ class Db3CsvParamsDialog(BaseProDialog):
         return self._result
 
 
-def ask_db3_csv_params(parent: QtWidgets.QWidget, default_out_dir: str | None = None) -> Optional[Db3CsvParams]:
-    dlg = Db3CsvParamsDialog(parent, default_out_dir=default_out_dir)
+def ask_db3_csv_params(
+    parent: QtWidgets.QWidget,
+    default_out_dir: str | None = None,
+    *,
+    default_fecha: str | None = None,
+    default_nombre_base: str | None = None,
+    default_carpeta: str | None = None,
+    theme: Optional[dict] = None,
+) -> Optional[Db3CsvParams]:
+    dlg = Db3CsvParamsDialog(
+        parent,
+        default_out_dir=default_out_dir,
+        default_fecha=default_fecha,
+        default_nombre_base=default_nombre_base,
+        default_carpeta=default_carpeta,
+        theme=theme,
+    )
     if dlg.exec() == QtWidgets.QDialog.DialogCode.Accepted:
         return dlg.get_result()
     return None
