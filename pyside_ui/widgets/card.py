@@ -53,15 +53,15 @@ class Card(QFrame):
 
         self.setStyleSheet(f"""
             QFrame#card {{
-                background: {self._theme["card_bg"]};
-                border: 1px solid {self._theme["card_border"]};
+                background: {self._theme.get("card_bg", "#2b2b2b")};
+                border: 1px solid {self._theme.get("card_border", "#3a3a3a")};
                 border-radius: 22px;
             }}
         """)
 
         # Título
         self.title_lbl.setStyleSheet(f"""
-            color: {self._theme['text']};
+            color: {self._theme.get("text", "#ffffff")};
             background: transparent;
             border: 0;
             padding: 0;
@@ -69,8 +69,8 @@ class Card(QFrame):
 
         # Underline (fade soft)
         accent = self._theme.get("orange", "#FF9A2E")
-        border = self._theme["card_border"]
-        bg = self._theme["card_bg"]
+        border = self._theme.get("card_border", "#3a3a3a")
+        bg = self._theme.get("card_bg", "#2b2b2b")
 
         self.title_rule.setStyleSheet(f"""
             QFrame#title_rule {{

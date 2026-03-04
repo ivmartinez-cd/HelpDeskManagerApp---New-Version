@@ -237,10 +237,6 @@ class EstimadorManualDialog(BaseProDialog):
         btn_calc.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
         btn_calc.clicked.connect(self._on_calcular)
 
-
-
-        btn_calc.clicked.connect(self._on_calcular)
-
         btn_close = QtWidgets.QPushButton("Cerrar")
         btn_close.clicked.connect(self.close)
 
