@@ -5,7 +5,13 @@ from typing import Optional
 
 from PySide6 import QtWidgets, QtCore, QtGui
 
-from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, get_theme, warn
+from pyside_ui.ui.dialog_kit import (
+    BaseProDialog,
+    apply_dialog_style,
+    get_theme,
+    resolve_theme,
+    warn,
+)
 
 
 @dataclass(frozen=True)
@@ -62,18 +68,18 @@ class Db3CsvParamsDialog(BaseProDialog):
         btn_pick.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
         btn_pick.clicked.connect(self._pick_folder)
 
-        row_carpeta = QtWidgets.QHBoxLayout()
+        # Contenedor estilizado para que coincida con el resto de campos del formulario
+        folder_picker_wrap = QtWidgets.QWidget()
+        folder_picker_wrap.setObjectName("FolderPickerWrap")
+        row_carpeta = QtWidgets.QHBoxLayout(folder_picker_wrap)
         row_carpeta.setContentsMargins(0, 0, 0, 0)
+        row_carpeta.setSpacing(0)
         row_carpeta.addWidget(self.ed_carpeta, 1)
         row_carpeta.addWidget(btn_pick, 0)
 
         form.addRow("Fecha máxima:", self.ed_fecha)
         form.addRow("Nombre base:", self.ed_nombre)
-
-        # QFormLayout no acepta layout directo en addRow sin widget intermedio.
-        wrap = QtWidgets.QWidget()
-        wrap.setLayout(row_carpeta)
-        form.addRow("Carpeta salida:", wrap)
+        form.addRow("Carpeta salida:", folder_picker_wrap)
 
         self.root_layout.addLayout(form)
 
@@ -99,6 +105,22 @@ class Db3CsvParamsDialog(BaseProDialog):
         # Style: theme explícito tiene prioridad; si no, se obtiene del parent
         theme_to_apply = theme if theme else get_theme(parent)
         apply_dialog_style(self, theme_to_apply)
+
+        # Aplicar al contenedor del folder picker el mismo estilo que los inputs (evita fondo negro)
+        t = resolve_theme(theme_to_apply)
+        folder_picker_wrap.setStyleSheet(
+            f"""
+            QWidget#FolderPickerWrap {{
+                background: {t.panel_bg};
+                border: 1px solid {t.border};
+                border-radius: 10px;
+            }}
+            QWidget#FolderPickerWrap QLineEdit {{
+                background: transparent;
+                border: none;
+            }}
+            """
+        )
 
     def _pick_folder(self) -> None:
         start = self.ed_carpeta.text().strip() or ""
