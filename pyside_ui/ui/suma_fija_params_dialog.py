@@ -1,12 +1,14 @@
 # pyside_ui/ui/suma_fija_params_dialog.py
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Optional, List
 
 from PySide6 import QtWidgets, QtCore, QtGui
 
-from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, warn
+from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, get_theme, warn
+from pyside_ui.widgets.folder_picker_row import FolderPickerRow
 
 
 @dataclass(frozen=True)
@@ -35,8 +37,8 @@ class SumaFijaParamsDialog(BaseProDialog):
             w=760,
         )
 
-        if theme:
-            apply_dialog_style(self, theme)
+        theme_to_apply = theme if theme else get_theme(parent)
+        apply_dialog_style(self, theme_to_apply)
 
         self._result: Optional[SumaFijaParams] = None
 
@@ -71,29 +73,15 @@ class SumaFijaParamsDialog(BaseProDialog):
         form.addRow("Excel SIGES:", wrap_files)
 
         # -------- Carpeta salida --------
-        self.ed_out = QtWidgets.QLineEdit()
-        self.ed_out.setPlaceholderText("Carpeta destino (obligatoria)")
-        self.ed_out.setClearButtonEnabled(True)
-        if default_out_dir:
-            self.ed_out.setText(default_out_dir)
-
-        btn_pick_out = QtWidgets.QPushButton("Elegir…")
-        btn_pick_out.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
-        btn_pick_out.clicked.connect(self._pick_out_dir)
-
-        row_out = QtWidgets.QHBoxLayout()
-        row_out.setContentsMargins(0, 0, 0, 0)
-        row_out.setSpacing(8)
-        row_out.addWidget(self.ed_out, 1)
-        row_out.addWidget(btn_pick_out, 0)
-
-        wrap_out = QtWidgets.QWidget()
-        wrap_out.setObjectName("RowWrapTransparent")
-        wrap_out.setLayout(row_out)
-        wrap_out.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
-        wrap_out.setStyleSheet("QWidget#RowWrapTransparent { background: transparent; }")
-
-        form.addRow("Carpeta salida:", wrap_out)
+        self.folder_picker = FolderPickerRow(
+            self,
+            placeholder="Carpeta destino (obligatoria)",
+            initial_value=default_out_dir or "",
+            theme=theme_to_apply,
+            mode="folder",
+            dialog_title="Elegir carpeta de salida",
+        )
+        form.addRow("Carpeta salida:", self.folder_picker)
 
         # -------- Fecha --------
         self.ed_fecha = QtWidgets.QLineEdit()
@@ -146,7 +134,6 @@ class SumaFijaParamsDialog(BaseProDialog):
         start_dir = ""
         if self._files:
             try:
-                import os
                 start_dir = os.path.dirname(self._files[0])
             except Exception:
                 start_dir = ""
@@ -161,18 +148,11 @@ class SumaFijaParamsDialog(BaseProDialog):
             self._files = list(files)
             self._refresh_files_text()
             # sugerir carpeta salida si está vacía
-            if not self.ed_out.text().strip():
+            if not self.folder_picker.get_path():
                 try:
-                    import os
-                    self.ed_out.setText(os.path.dirname(files[0]))
+                    self.folder_picker.set_path(os.path.dirname(files[0]))
                 except Exception:
                     pass
-
-    def _pick_out_dir(self) -> None:
-        start = self.ed_out.text().strip() or ""
-        folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Elegir carpeta de salida", start)
-        if folder:
-            self.ed_out.setText(folder)
 
     def _valid_date_ddmmyyyy(self, s: str) -> bool:
         if not s:
@@ -181,7 +161,7 @@ class SumaFijaParamsDialog(BaseProDialog):
         return dt.isValid()
 
     def _on_ok(self) -> None:
-        out_dir = self.ed_out.text().strip()
+        out_dir = self.folder_picker.get_path()
         fecha = self.ed_fecha.text().strip()
         hojas = int(self.sp_hojas.value())
 

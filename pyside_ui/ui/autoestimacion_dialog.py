@@ -7,7 +7,8 @@ from datetime import datetime
 
 from PySide6 import QtWidgets, QtCore, QtGui
 
-from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, warn
+from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, get_theme, warn
+from pyside_ui.widgets.folder_picker_row import FolderPickerRow
 
 
 @dataclass(frozen=True)
@@ -32,8 +33,8 @@ class AutoestimacionDialog(BaseProDialog):
             w=720,
         )
 
-        if theme:
-            apply_dialog_style(self, theme)
+        theme_to_apply = theme if theme else get_theme(parent)
+        apply_dialog_style(self, theme_to_apply)
 
         self._result: Optional[AutoestimacionParams] = None
 
@@ -42,35 +43,17 @@ class AutoestimacionDialog(BaseProDialog):
         form.setHorizontalSpacing(14)
         form.setVerticalSpacing(10)
 
-        # -------------------------
-        # CSV entrada + picker
-        # -------------------------
-        self.ed_csv = QtWidgets.QLineEdit()
-        self.ed_csv.setPlaceholderText("Seleccioná el CSV de detalle…")
-        self.ed_csv.setClearButtonEnabled(True)
-
-        if default_csv:
-            self.ed_csv.setText(default_csv)
-
-        btn_pick_csv = QtWidgets.QPushButton("Elegir…")
-        btn_pick_csv.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
-        btn_pick_csv.clicked.connect(self._pick_csv)
-
-        row_csv = QtWidgets.QHBoxLayout()
-        row_csv.setContentsMargins(0, 0, 0, 0)
-        row_csv.setSpacing(8)
-        row_csv.addWidget(self.ed_csv, 1)
-        row_csv.addWidget(btn_pick_csv, 0)
-
-        wrap_csv = QtWidgets.QWidget()
-        wrap_csv.setObjectName("RowWrapTransparent")
-        wrap_csv.setLayout(row_csv)
-        wrap_csv.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
-        wrap_csv.setStyleSheet(
-            "QWidget#RowWrapTransparent { background: transparent; }"
+        # CSV entrada
+        self.csv_picker = FolderPickerRow(
+            self,
+            placeholder="Seleccioná el CSV de detalle…",
+            initial_value=default_csv or "",
+            theme=theme_to_apply,
+            mode="file",
+            file_filter="CSV (*.csv);;Todos (*.*)",
+            dialog_title="Elegir CSV de detalle",
         )
-
-        form.addRow("CSV detalle:", wrap_csv)
+        form.addRow("CSV detalle:", self.csv_picker)
 
         # -------------------------
         # Fecha
@@ -115,17 +98,6 @@ class AutoestimacionDialog(BaseProDialog):
     # Internos
     # ======================================================
 
-    def _pick_csv(self) -> None:
-        start = self.ed_csv.text().strip() or ""
-        path, _ = QtWidgets.QFileDialog.getOpenFileName(
-            self,
-            "Elegir CSV de detalle",
-            start,
-            "CSV (*.csv);;Todos (*.*)",
-        )
-        if path:
-            self.ed_csv.setText(path)
-
     def _valid_date_ddmmyyyy(self, s: str) -> bool:
         if not s:
             return False
@@ -136,7 +108,7 @@ class AutoestimacionDialog(BaseProDialog):
             return False
 
     def _on_ok(self) -> None:
-        csv_path = self.ed_csv.text().strip()
+        csv_path = self.csv_picker.get_path()
         fecha = self.ed_fecha.text().strip()
 
         if not csv_path:

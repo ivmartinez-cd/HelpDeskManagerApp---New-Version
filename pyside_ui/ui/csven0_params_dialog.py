@@ -1,12 +1,14 @@
 # pyside_ui/ui/csven0_params_dialog.py
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 from typing import Optional
 
 from PySide6 import QtWidgets, QtCore, QtGui
 
-from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, warn
+from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, get_theme, warn
+from pyside_ui.widgets.folder_picker_row import FolderPickerRow
 
 
 @dataclass(frozen=True)
@@ -34,9 +36,8 @@ class CsvEn0ParamsDialog(BaseProDialog):
             w=720,
         )
 
-        # Si el controller pasa theme explícito, lo aplicamos (override del que toma del parent.window())
-        if theme:
-            apply_dialog_style(self, theme)
+        theme_to_apply = theme if theme else get_theme(parent)
+        apply_dialog_style(self, theme_to_apply)
 
         self._result: Optional[CsvEn0Params] = None
 
@@ -45,31 +46,17 @@ class CsvEn0ParamsDialog(BaseProDialog):
         form.setHorizontalSpacing(14)
         form.setVerticalSpacing(10)
 
-        # CSV entrada + picker
-        self.ed_csv = QtWidgets.QLineEdit()
-        self.ed_csv.setPlaceholderText("Seleccioná el CSV de entrada…")
-        self.ed_csv.setClearButtonEnabled(True)
-        if default_in_path:
-            self.ed_csv.setText(default_in_path)
-
-        btn_pick_csv = QtWidgets.QPushButton("Elegir…")
-        btn_pick_csv.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
-        btn_pick_csv.clicked.connect(self._pick_csv)
-
-        row_csv = QtWidgets.QHBoxLayout()
-        row_csv.setContentsMargins(0, 0, 0, 0)
-        row_csv.setSpacing(8)  # ✅ evita “seams” visuales
-        row_csv.addWidget(self.ed_csv, 1)
-        row_csv.addWidget(btn_pick_csv, 0)
-
-        wrap_csv = QtWidgets.QWidget()
-        wrap_csv.setObjectName("RowWrapTransparent")
-        wrap_csv.setLayout(row_csv)
-        # ✅ FIX: el wrapper debe ser transparente para que no “aparezca negro”
-        wrap_csv.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
-        wrap_csv.setStyleSheet("QWidget#RowWrapTransparent { background: transparent; }")
-
-        form.addRow("CSV entrada:", wrap_csv)
+        # CSV entrada
+        self.csv_picker = FolderPickerRow(
+            self,
+            placeholder="Seleccioná el CSV de entrada…",
+            initial_value=default_in_path or "",
+            theme=theme_to_apply,
+            mode="file",
+            file_filter="CSV (*.csv);;Todos (*.*)",
+            dialog_title="Elegir CSV de entrada",
+        )
+        form.addRow("CSV entrada:", self.csv_picker)
 
         # Fecha nueva
         self.ed_fecha = QtWidgets.QLineEdit()
@@ -84,31 +71,17 @@ class CsvEn0ParamsDialog(BaseProDialog):
         self.ed_cliente.setClearButtonEnabled(True)
         form.addRow("Nombre cliente:", self.ed_cliente)
 
-        # Carpeta salida + picker
-        self.ed_carpeta = QtWidgets.QLineEdit()
-        self.ed_carpeta.setPlaceholderText("Carpeta destino (opcional, por defecto junto al CSV)")
-        self.ed_carpeta.setClearButtonEnabled(True)
-        if default_out_dir:
-            self.ed_carpeta.setText(default_out_dir)
-
-        btn_pick_out = QtWidgets.QPushButton("Elegir…")
-        btn_pick_out.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
-        btn_pick_out.clicked.connect(self._pick_out_dir)
-
-        row_out = QtWidgets.QHBoxLayout()
-        row_out.setContentsMargins(0, 0, 0, 0)
-        row_out.setSpacing(8)  # ✅ evita “seams” visuales
-        row_out.addWidget(self.ed_carpeta, 1)
-        row_out.addWidget(btn_pick_out, 0)
-
-        wrap_out = QtWidgets.QWidget()
-        wrap_out.setObjectName("RowWrapTransparent")
-        wrap_out.setLayout(row_out)
-        # ✅ FIX: transparente también
-        wrap_out.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)
-        wrap_out.setStyleSheet("QWidget#RowWrapTransparent { background: transparent; }")
-
-        form.addRow("Carpeta salida:", wrap_out)
+        # Carpeta salida
+        self.folder_picker = FolderPickerRow(
+            self,
+            placeholder="Carpeta destino (opcional, por defecto junto al CSV)",
+            initial_value=default_out_dir or "",
+            theme=theme_to_apply,
+            mode="folder",
+            dialog_title="Elegir carpeta de salida",
+        )
+        self.csv_picker.path_changed.connect(self._on_csv_path_changed)
+        form.addRow("Carpeta salida:", self.folder_picker)
 
         # Delimiter
         self.ed_delim = QtWidgets.QLineEdit()
@@ -138,29 +111,12 @@ class CsvEn0ParamsDialog(BaseProDialog):
         self.root_layout.addSpacing(6)
         self.root_layout.addLayout(row_btns)
 
-    def _pick_csv(self) -> None:
-        start = self.ed_csv.text().strip() or ""
-        path, _filter = QtWidgets.QFileDialog.getOpenFileName(
-            self,
-            "Elegir CSV de entrada",
-            start,
-            "CSV (*.csv);;Todos (*.*)",
-        )
-        if path:
-            self.ed_csv.setText(path)
-            if not self.ed_carpeta.text().strip():
-                try:
-                    import os
-
-                    self.ed_carpeta.setText(os.path.dirname(path))
-                except Exception:
-                    pass
-
-    def _pick_out_dir(self) -> None:
-        start = self.ed_carpeta.text().strip() or ""
-        folder = QtWidgets.QFileDialog.getExistingDirectory(self, "Elegir carpeta de salida", start)
-        if folder:
-            self.ed_carpeta.setText(folder)
+    def _on_csv_path_changed(self, path: str) -> None:
+        if path and not self.folder_picker.get_path():
+            try:
+                self.folder_picker.set_path(os.path.dirname(path))
+            except Exception:
+                pass
 
     def _valid_date_ddmmyyyy(self, s: str) -> bool:
         if not s:
@@ -172,10 +128,10 @@ class CsvEn0ParamsDialog(BaseProDialog):
             return False
 
     def _on_ok(self) -> None:
-        csv_in = self.ed_csv.text().strip()
+        csv_in = self.csv_picker.get_path()
         fecha = self.ed_fecha.text().strip()
         cliente = self.ed_cliente.text().strip()
-        carpeta = self.ed_carpeta.text().strip()
+        carpeta = self.folder_picker.get_path()
         delim = self.ed_delim.text().strip() or ","
 
         if not csv_in:
