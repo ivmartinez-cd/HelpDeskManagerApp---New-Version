@@ -45,6 +45,8 @@ class _ProTitleBar(QWidget):
         self._title = QLabel(parent.windowTitle())
         self._title.setObjectName("ProMainTitle")
         self._title.setFont(QFont("Segoe UI", 10, QFont.Bold))
+        if not parent.windowTitle():
+            self._title.setVisible(False)
 
         lay.addWidget(self._icon, 0, Qt.AlignVCenter)
         lay.addWidget(self._title, 0, Qt.AlignVCenter)
@@ -113,7 +115,7 @@ class MainWindow(QMainWindow):
         self.theme_name = "dark"
         self.theme = THEME[self.theme_name]
 
-        self.setWindowTitle("HelpDeskManagerApp — Prototype (PySide6)")
+        self.setWindowTitle("")
         self.setMinimumSize(960, 640)
         self.resize(1100, 720)
         self.setMaximumSize(1400, 900)
@@ -140,10 +142,10 @@ class MainWindow(QMainWindow):
         self.titlebar.set_icon(self._app_icon)
         self.v.addWidget(self.titlebar, 0)
 
-        # Contenedor interno (márgenes alineados con área de contenido)
+        # Contenedor interno (margen superior reducido para anclar el header; horizontales sin cambio)
         self.inner = QWidget()
         self.inner_lay = QVBoxLayout(self.inner)
-        self.inner_lay.setContentsMargins(28, 22, 28, 22)
+        self.inner_lay.setContentsMargins(28, 12, 28, 22)
         self.inner_lay.setSpacing(14)
 
         # Header: [ Icono + Título/Subtítulo ]  stretch  [ Theme Toggle ]
