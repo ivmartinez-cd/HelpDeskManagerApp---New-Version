@@ -4,12 +4,10 @@ from __future__ import annotations
 import webbrowser
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
     QHeaderView,
     QHBoxLayout,
-    QLabel,
     QLineEdit,
     QComboBox,
     QPushButton,
@@ -167,31 +165,20 @@ class LinksTab(QWidget):
         self.card = Card("Links")
         lay.addWidget(self.card, 1)  # stretch 1: la card ocupa todo el alto disponible
 
-        # --- Fila filtros ---
-        row = QHBoxLayout()
-        row.setSpacing(10)
-
-        lbl = QLabel("Filtrar")
-        lbl.setFont(QFont("Segoe UI", 10))
-        lbl.setStyleSheet(f"""
-            QLabel {{
-                color: {self._theme.get("muted", "#B0B0B0")};
-                background: transparent;
-                padding-left: 2px;
-            }}
-        """)
-        row.addWidget(lbl, 0, Qt.AlignVCenter)
+        # --- Fila búsqueda + filtro (sin etiqueta "Filtrar") ---
+        filter_row = QHBoxLayout()
+        filter_row.setSpacing(10)
 
         self.ed_filter = QLineEdit()
         self.ed_filter.setPlaceholderText("Buscar por nombre o URL…")
-        row.addWidget(self.ed_filter, 1)
+        filter_row.addWidget(self.ed_filter, 1)
 
         self.cmb_group = QComboBox()
-        self.cmb_group.addItems(["Todos"])  # UI pura por ahora
-        self.cmb_group.setFixedWidth(160)
-        row.addWidget(self.cmb_group, 0)
+        self.cmb_group.addItems(["Todos", "Manuales", "Documentación", "Otros"])
+        self.cmb_group.setFixedWidth(130)
+        filter_row.addWidget(self.cmb_group, 0)
 
-        self.card.grid.addLayout(row, 0, 0, 1, 2)
+        self.card.grid.addLayout(filter_row, 0, 0, 1, 2)
 
         # --- Tabla ---
         self.table = QTableWidget(0, 2)
@@ -204,19 +191,19 @@ class LinksTab(QWidget):
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
 
         hdr = self.table.horizontalHeader()
-        hdr.setStretchLastSection(True)
-        hdr.setSectionResizeMode(0, QHeaderView.ResizeToContents)
-        hdr.setMinimumSectionSize(140)
+        hdr.setSectionResizeMode(0, QHeaderView.Stretch)
+        hdr.setSectionResizeMode(1, QHeaderView.Stretch)
 
+        self.card.grid.setVerticalSpacing(10)
         self.card.grid.addWidget(self.table, 1, 0, 1, 2)
-        self.card.grid.setRowStretch(1, 1)  # la fila de la tabla se expande con el espacio disponible
-        self.table.setMinimumHeight(280)  # altura mínima para ver varios links sin tanto scroll
+        self.card.grid.setRowStretch(1, 1)
+        self.table.setMinimumHeight(280)
 
-        # --- Botonera ---
+        # --- Botonera (espacio superior ~12px vía grid vertical spacing) ---
         btn_row = QHBoxLayout()
         btn_row.setSpacing(10)
+        btn_row.setContentsMargins(0, 12, 0, 0)
         btn_row.addStretch(1)
-
         self.btn_open = QPushButton("Abrir")
         self.btn_copy = QPushButton("Copiar URL")
         btn_row.addWidget(self.btn_open, 0)
