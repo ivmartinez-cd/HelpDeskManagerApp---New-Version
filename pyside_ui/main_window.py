@@ -110,6 +110,10 @@ class _ProTitleBar(QWidget):
 
     def _show_app_menu(self) -> None:
         """Muestra el menú de la aplicación como popup (evita ventana nativa del menubar)."""
+        if not getattr(self._mw, "_menubar_built", False):
+            build_menubar(self._mw, self._mw._noop)
+            self._mw._menubar_built = True
+            self._mw.apply_theme()
         mb = self._mw.menuBar()
         if not mb:
             return
@@ -146,10 +150,8 @@ class MainWindow(QMainWindow):
         self.toast_mgr = ToastManager(self)
         self.status_bus.notify_requested.connect(self.toast_mgr.show)
 
-        # Menú: se construye pero se oculta para evitar segunda ventana con FramelessWindowHint.
-        # El acceso al menú es mediante el botón ☰ en la titlebar (_show_app_menu).
-        build_menubar(self, self._noop)
-        self.menuBar().setVisible(False)
+        # Menú: se construye solo al primer clic en ☰ para evitar ventana nativa del menubar al inicio.
+        self._menubar_built = False
 
         root = QWidget()
         self.setCentralWidget(root)
@@ -354,22 +356,23 @@ class MainWindow(QMainWindow):
         self.theme_btn.set_theme(t)
         self.theme_btn.set_light(self.theme_name == "light", emit=False)
 
-        apply_menubar_theme(self, t)
-        mb = self.menuBar()
-        mb.setStyleSheet(
-            "QMenuBar { background: %(bg)s; color: %(fg)s; }"
-            "QMenuBar::item { background: transparent; padding: 4px 10px; }"
-            "QMenuBar::item:selected { background: %(hover)s; }"
-            "QMenu { background: %(bg2)s; color: %(fg)s; border: 1px solid %(border)s; }"
-            "QMenu::item:selected { background: %(hover)s; }"
-            % {
-                "bg": t["app_bg"],
-                "bg2": t.get("panel_bg", t["app_bg"]),
-                "fg": t.get("text", "#EAEAEA"),
-                "hover": t.get("panel_bg2", t.get("panel_bg", t["app_bg"])),
-                "border": t.get("border", "#3A3A3A"),
-            }
-        )
+        if getattr(self, "_menubar_built", False):
+            apply_menubar_theme(self, t)
+            mb = self.menuBar()
+            mb.setStyleSheet(
+                "QMenuBar { background: %(bg)s; color: %(fg)s; }"
+                "QMenuBar::item { background: transparent; padding: 4px 10px; }"
+                "QMenuBar::item:selected { background: %(hover)s; }"
+                "QMenu { background: %(bg2)s; color: %(fg)s; border: 1px solid %(border)s; }"
+                "QMenu::item:selected { background: %(hover)s; }"
+                % {
+                    "bg": t["app_bg"],
+                    "bg2": t.get("panel_bg", t["app_bg"]),
+                    "fg": t.get("text", "#EAEAEA"),
+                    "hover": t.get("panel_bg2", t.get("panel_bg", t["app_bg"])),
+                    "border": t.get("border", "#3A3A3A"),
+                }
+            )
 
     # Events
     def on_toggle_theme(self, is_light: bool):

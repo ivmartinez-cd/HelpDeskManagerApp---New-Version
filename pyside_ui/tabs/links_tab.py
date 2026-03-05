@@ -19,7 +19,7 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 
-from pyside_ui.widgets import BaseTabLayout, ModernCheckBox
+from pyside_ui.widgets import ModernCheckBox
 
 
 def _small_btn_qss(theme: dict) -> str:
@@ -146,7 +146,7 @@ def _table_qss(theme: dict) -> str:
 
 class LinksTab(QWidget):
     """
-    Tab Links: solo define UI. Usa BaseTabLayout para estructura consistente.
+    Tab Links: solo define UI. Layout simple con QVBoxLayout.
     Sin ventanas ni diálogos; solo widgets y layouts.
     """
 
@@ -154,32 +154,29 @@ class LinksTab(QWidget):
         super().__init__(parent)
         self._theme = theme or {}
 
-        # Contenedor con margen inferior para sombra (igual que antes)
-        root_layout = QVBoxLayout(self)
-        root_layout.setContentsMargins(0, 0, 0, 36)
-        root_layout.setSpacing(0)
+        main = QVBoxLayout(self)
+        main.setContentsMargins(20, 20, 20, 36)
+        main.setSpacing(16)
 
-        self._base = BaseTabLayout(self)
-        root_layout.addWidget(self._base)
-
-        # ─── SECTION 1 — Header: título + toolbar (búsqueda, filtro) ─────────
+        # 1. Title label
         self._title_lbl = QLabel("Links")
         self._title_lbl.setObjectName("LinksTabTitle")
         self._title_lbl.setFont(QFont("Segoe UI", 17, QFont.DemiBold))
-        self._base.header_layout.addWidget(self._title_lbl)
+        main.addWidget(self._title_lbl, 0)
 
-        toolbar = QHBoxLayout()
-        toolbar.setSpacing(8)
+        # 2. Search row: search expanding, filter right
+        search_row = QHBoxLayout()
+        search_row.setSpacing(8)
         self.ed_filter = QLineEdit()
         self.ed_filter.setPlaceholderText("Buscar por nombre o URL…")
-        toolbar.addWidget(self.ed_filter, 1)
+        search_row.addWidget(self.ed_filter, 1)
         self.cmb_group = QComboBox()
         self.cmb_group.addItems(["Todos", "Manuales", "Documentación", "Otros"])
         self.cmb_group.setFixedWidth(130)
-        toolbar.addWidget(self.cmb_group, 0)
-        self._base.header_layout.addLayout(toolbar)
+        search_row.addWidget(self.cmb_group, 0)
+        main.addLayout(search_row, 0)
 
-        # ─── SECTION 2 — Content: tabla (expande) ────────────────────────────
+        # 3. Table expanding fully
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Nombre", "URL"])
         self.table.verticalHeader().setVisible(False)
@@ -191,22 +188,29 @@ class LinksTab(QWidget):
         hdr = self.table.horizontalHeader()
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
-        self._base.content_layout.addWidget(self.table, 1)
+        main.addWidget(self.table, 1)
 
-        # ─── SECTION 3 — Action bar: botones a la derecha (stretch ya en base) ─
+        # 4. Buttons aligned right
+        btn_row = QHBoxLayout()
+        btn_row.setSpacing(8)
+        btn_row.addStretch(1)
         self.btn_open = QPushButton("Abrir")
         self.btn_copy = QPushButton("Copiar URL")
         self.btn_open.clicked.connect(self._open_link)
         self.btn_copy.clicked.connect(self._copy_link)
-        self._base.action_bar_layout.addWidget(self.btn_open, 0)
-        self._base.action_bar_layout.addWidget(self.btn_copy, 0)
+        btn_row.addWidget(self.btn_open, 0)
+        btn_row.addWidget(self.btn_copy, 0)
+        main.addLayout(btn_row, 0)
 
-        # ─── SECTION 4 — Footer: izquierda texto, derecha checkbox ───────────
+        # 5. Footer: left Hecho por, right Iniciar con Windows
+        footer_row = QHBoxLayout()
+        footer_row.setSpacing(8)
         self.footer_lbl = QLabel("Hecho por: Iván Martínez")
-        self._base.footer_layout.addWidget(self.footer_lbl, 0, Qt.AlignLeft)
-        self._base.footer_layout.addStretch(1)
+        footer_row.addWidget(self.footer_lbl, 0, Qt.AlignLeft)
+        footer_row.addStretch(1)
         self.chk_startup = ModernCheckBox("Iniciar con Windows")
-        self._base.footer_layout.addWidget(self.chk_startup, 0, Qt.AlignRight)
+        footer_row.addWidget(self.chk_startup, 0, Qt.AlignRight)
+        main.addLayout(footer_row, 0)
 
         self.set_theme(self._theme)
         self._seed_demo()
