@@ -196,7 +196,7 @@ class LinksTab(QWidget):
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        # Scroll area para que la tabla no desborde la card: contenido dentro del borde
+        # Scroll area: tabla contenida, sin desborde
         self.table_scroll = QScrollArea()
         self.table_scroll.setWidget(self.table)
         self.table_scroll.setWidgetResizable(True)
@@ -205,10 +205,7 @@ class LinksTab(QWidget):
         self.table_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_scroll.setMinimumHeight(200)
 
-        self.card.grid.addWidget(self.table_scroll, 1, 0, 1, 2)
-        self.card.grid.setRowStretch(1, 1)
-
-        # --- Barra de acciones: separador + 8px + botones alineados a la derecha ---
+        # Barra de acciones: separador + botones, siempre debajo de la tabla
         self.action_bar = QWidget()
         self.action_bar.setObjectName("LinksActionBar")
         action_v = QVBoxLayout(self.action_bar)
@@ -234,7 +231,16 @@ class LinksTab(QWidget):
         self.btn_open.clicked.connect(self._open_link)
         self.btn_copy.clicked.connect(self._copy_link)
 
-        self.card.grid.addWidget(self.action_bar, 2, 0, 1, 2)
+        # Contenedor tabla + barra en un solo layout vertical: tabla arriba, botones abajo
+        table_and_actions = QWidget()
+        table_and_actions_lay = QVBoxLayout(table_and_actions)
+        table_and_actions_lay.setContentsMargins(0, 0, 0, 0)
+        table_and_actions_lay.setSpacing(0)
+        table_and_actions_lay.addWidget(self.table_scroll, 1)
+        table_and_actions_lay.addWidget(self.action_bar, 0)
+
+        self.card.grid.addWidget(table_and_actions, 1, 0, 1, 2)
+        self.card.grid.setRowStretch(1, 1)
 
         # Estilos
         self.set_theme(self._theme)

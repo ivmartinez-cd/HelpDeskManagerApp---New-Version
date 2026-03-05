@@ -34,7 +34,7 @@ class _ProTitleBar(QWidget):
         self.setObjectName("ProMainTitleBar")
 
         lay = QHBoxLayout(self)
-        lay.setContentsMargins(12, 8, 8, 8)
+        lay.setContentsMargins(12, 4, 8, 4)
         lay.setSpacing(10)
 
         # Sin icono en la barra de título (solo menú y botones)
@@ -142,10 +142,10 @@ class MainWindow(QMainWindow):
         self.titlebar.set_icon(self._app_icon)
         self.v.addWidget(self.titlebar, 0)
 
-        # Contenedor interno (margen superior reducido para anclar el header; horizontales sin cambio)
+        # Contenedor interno (margen superior reducido para acercar header a la barra; horizontales sin cambio)
         self.inner = QWidget()
         self.inner_lay = QVBoxLayout(self.inner)
-        self.inner_lay.setContentsMargins(28, 12, 28, 22)
+        self.inner_lay.setContentsMargins(28, 8, 28, 22)
         self.inner_lay.setSpacing(14)
 
         # Header: [ Icono + Título/Subtítulo ]  stretch  [ Theme Toggle ]
