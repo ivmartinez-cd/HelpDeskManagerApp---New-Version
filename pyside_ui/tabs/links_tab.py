@@ -4,6 +4,7 @@ from __future__ import annotations
 import webbrowser
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
     QApplication,
     QHeaderView,
@@ -18,7 +19,7 @@ from PySide6.QtWidgets import (
     QLabel,
 )
 
-from pyside_ui.widgets import Card, ModernCheckBox
+from pyside_ui.widgets import BaseTabLayout, ModernCheckBox
 
 
 def _small_btn_qss(theme: dict) -> str:
@@ -145,33 +146,40 @@ def _table_qss(theme: dict) -> str:
 
 class LinksTab(QWidget):
     """
-    Tab Links: solo define UI. Sin ventanas ni diálogos automáticos.
-    Jerarquía: MainVBox → Header (título + filtros) → Tabla → Botones → Footer.
+    Tab Links: solo define UI. Usa BaseTabLayout para estructura consistente.
+    Sin ventanas ni diálogos; solo widgets y layouts.
     """
 
     def __init__(self, theme: dict, parent=None):
         super().__init__(parent)
         self._theme = theme or {}
 
-        # ─── Main vertical layout ─────────────────────────────────────────────
-        main_layout = QVBoxLayout(self)
-        main_layout.setContentsMargins(0, 0, 0, 36)
-        main_layout.setSpacing(0)
+        # Contenedor con margen inferior para sombra (igual que antes)
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(0, 0, 0, 36)
+        root_layout.setSpacing(0)
 
-        # ─── SECTION 1 — Header: título "Links" + búsqueda y filtro ──────────
-        self.card = Card("Links")
-        header_row = QHBoxLayout()
-        header_row.setSpacing(10)
+        self._base = BaseTabLayout(self)
+        root_layout.addWidget(self._base)
+
+        # ─── SECTION 1 — Header: título + toolbar (búsqueda, filtro) ─────────
+        self._title_lbl = QLabel("Links")
+        self._title_lbl.setObjectName("LinksTabTitle")
+        self._title_lbl.setFont(QFont("Segoe UI", 17, QFont.DemiBold))
+        self._base.header_layout.addWidget(self._title_lbl)
+
+        toolbar = QHBoxLayout()
+        toolbar.setSpacing(8)
         self.ed_filter = QLineEdit()
         self.ed_filter.setPlaceholderText("Buscar por nombre o URL…")
-        header_row.addWidget(self.ed_filter, 1)
+        toolbar.addWidget(self.ed_filter, 1)
         self.cmb_group = QComboBox()
         self.cmb_group.addItems(["Todos", "Manuales", "Documentación", "Otros"])
         self.cmb_group.setFixedWidth(130)
-        header_row.addWidget(self.cmb_group, 0)
-        self.card.grid.addLayout(header_row, 0, 0, 1, 2)
+        toolbar.addWidget(self.cmb_group, 0)
+        self._base.header_layout.addLayout(toolbar)
 
-        # ─── SECTION 2 — Tabla (expande, columnas estiradas, selección por fila) ─
+        # ─── SECTION 2 — Content: tabla (expande) ────────────────────────────
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Nombre", "URL"])
         self.table.verticalHeader().setVisible(False)
@@ -183,32 +191,22 @@ class LinksTab(QWidget):
         hdr = self.table.horizontalHeader()
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
-        self.card.grid.addWidget(self.table, 1, 0, 1, 2)
-        self.card.grid.setRowStretch(1, 1)
-        main_layout.addWidget(self.card, 1)
+        self._base.content_layout.addWidget(self.table, 1)
 
-        # ─── SECTION 3 — Botones de acción (alineados a la derecha) ────────────
-        buttons_layout = QHBoxLayout()
-        buttons_layout.setSpacing(10)
-        buttons_layout.addStretch(1)
+        # ─── SECTION 3 — Action bar: botones a la derecha (stretch ya en base) ─
         self.btn_open = QPushButton("Abrir")
         self.btn_copy = QPushButton("Copiar URL")
         self.btn_open.clicked.connect(self._open_link)
         self.btn_copy.clicked.connect(self._copy_link)
-        buttons_layout.addWidget(self.btn_open, 0)
-        buttons_layout.addWidget(self.btn_copy, 0)
-        main_layout.addLayout(buttons_layout, 0)
+        self._base.action_bar_layout.addWidget(self.btn_open, 0)
+        self._base.action_bar_layout.addWidget(self.btn_copy, 0)
 
-        # ─── SECTION 4 — Footer: autor izquierda, checkbox derecha ───────────
-        footer_layout = QHBoxLayout()
-        footer_layout.setContentsMargins(0, 12, 0, 0)
-        footer_layout.setSpacing(0)
+        # ─── SECTION 4 — Footer: izquierda texto, derecha checkbox ───────────
         self.footer_lbl = QLabel("Hecho por: Iván Martínez")
-        footer_layout.addWidget(self.footer_lbl, 0, Qt.AlignLeft)
-        footer_layout.addStretch(1)
+        self._base.footer_layout.addWidget(self.footer_lbl, 0, Qt.AlignLeft)
+        self._base.footer_layout.addStretch(1)
         self.chk_startup = ModernCheckBox("Iniciar con Windows")
-        footer_layout.addWidget(self.chk_startup, 0, Qt.AlignRight)
-        main_layout.addLayout(footer_layout, 0)
+        self._base.footer_layout.addWidget(self.chk_startup, 0, Qt.AlignRight)
 
         self.set_theme(self._theme)
         self._seed_demo()
@@ -282,18 +280,22 @@ class LinksTab(QWidget):
 
     def set_theme(self, theme: dict) -> None:
         self._theme = theme or {}
-        self.card.set_theme(self._theme)
+        t = self._theme
 
-        qss_inputs = _inputs_qss(self._theme)
+        self._title_lbl.setStyleSheet(
+            f"color: {t.get('text', '#EAEAEA')}; background: transparent; border: none;"
+        )
+
+        qss_inputs = _inputs_qss(t)
         self.ed_filter.setStyleSheet(qss_inputs)
         self.cmb_group.setStyleSheet(qss_inputs)
 
-        self.table.setStyleSheet(_table_qss(self._theme))
+        self.table.setStyleSheet(_table_qss(t))
 
-        btn_qss = _small_btn_qss(self._theme)
+        btn_qss = _small_btn_qss(t)
         self.btn_open.setStyleSheet(btn_qss)
         self.btn_copy.setStyleSheet(btn_qss)
 
-        muted = self._theme.get("muted", "#B8B8B8")
+        muted = t.get("muted", "#B8B8B8")
         self.footer_lbl.setStyleSheet(f"color: {muted}; background: transparent; border: none;")
-        self.chk_startup.set_theme(self._theme)
+        self.chk_startup.set_theme(t)

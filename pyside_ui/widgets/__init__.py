@@ -2,5 +2,6 @@
 from .theme_button import ThemeIconButton
 from .segmented_tabs import SegmentedTabs
 from .card import Card
+from .base_tab_layout import BaseTabLayout
 from .modern_checkbox import ModernCheckBox
 from .controls import make_big_button, update_big_button
