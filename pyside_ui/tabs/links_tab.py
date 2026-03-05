@@ -6,20 +6,19 @@ import webbrowser
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
-    QFrame,
     QHeaderView,
     QHBoxLayout,
     QLineEdit,
     QComboBox,
     QPushButton,
-    QScrollArea,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
     QWidget,
+    QLabel,
 )
 
-from pyside_ui.widgets import Card
+from pyside_ui.widgets import Card, ModernCheckBox
 
 
 def _small_btn_qss(theme: dict) -> str:
@@ -109,12 +108,8 @@ def _table_qss(theme: dict) -> str:
             border-radius: 14px;
             gridline-color: {border};
             padding: 4px;
-
-            /* Evita el contorno de foco "viejo" */
             outline: 0;
         }}
-
-        /* Selección prolija y consistente por celda (y como estás en SelectRows, se ve fila completa) */
         QTableWidget::item:selected {{
             background: {accent};
             color: #111111;
@@ -123,12 +118,9 @@ def _table_qss(theme: dict) -> str:
             background: {accent};
             color: #111111;
         }}
-
-        /* Quita el focus-rect que genera ese "pill" raro */
         QTableWidget::item:focus {{
             outline: none;
         }}
-              
         QHeaderView::section {{
             background: transparent;
             color: {muted};
@@ -137,16 +129,13 @@ def _table_qss(theme: dict) -> str:
             padding: 8px 10px;
             font-weight: 600;
         }}
-
         QTableWidget::item {{
             padding: 8px 10px;
             border: 0;
         }}
-
         QTableWidget::item:hover {{
             background: {hover};
         }}
-
         QTableCornerButton::section {{
             background: transparent;
             border: 0;
@@ -155,30 +144,34 @@ def _table_qss(theme: dict) -> str:
 
 
 class LinksTab(QWidget):
+    """
+    Tab Links: solo define UI. Sin ventanas ni diálogos automáticos.
+    Jerarquía: MainVBox → Header (título + filtros) → Tabla → Botones → Footer.
+    """
+
     def __init__(self, theme: dict, parent=None):
         super().__init__(parent)
         self._theme = theme or {}
 
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 36)
-        lay.setSpacing(0)
+        # ─── Main vertical layout ─────────────────────────────────────────────
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 36)
+        main_layout.setSpacing(0)
 
+        # ─── SECTION 1 — Header: título "Links" + búsqueda y filtro ──────────
         self.card = Card("Links")
-        lay.addWidget(self.card, 1)
-
-        # --- Fila búsqueda + filtro ---
-        filter_row = QHBoxLayout()
-        filter_row.setSpacing(10)
+        header_row = QHBoxLayout()
+        header_row.setSpacing(10)
         self.ed_filter = QLineEdit()
         self.ed_filter.setPlaceholderText("Buscar por nombre o URL…")
-        filter_row.addWidget(self.ed_filter, 1)
+        header_row.addWidget(self.ed_filter, 1)
         self.cmb_group = QComboBox()
         self.cmb_group.addItems(["Todos", "Manuales", "Documentación", "Otros"])
         self.cmb_group.setFixedWidth(130)
-        filter_row.addWidget(self.cmb_group, 0)
-        self.card.grid.addLayout(filter_row, 0, 0, 1, 2)
+        header_row.addWidget(self.cmb_group, 0)
+        self.card.grid.addLayout(header_row, 0, 0, 1, 2)
 
-        # --- Solo tabla dentro de la card (sin botones dentro) ---
+        # ─── SECTION 2 — Tabla (expande, columnas estiradas, selección por fila) ─
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Nombre", "URL"])
         self.table.verticalHeader().setVisible(False)
@@ -190,48 +183,41 @@ class LinksTab(QWidget):
         hdr = self.table.horizontalHeader()
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
-
-        self.table_scroll = QScrollArea()
-        self.table_scroll.setWidget(self.table)
-        self.table_scroll.setWidgetResizable(True)
-        self.table_scroll.setFrameShape(QFrame.Shape.NoFrame)
-        self.table_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.table_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.table_scroll.setMinimumHeight(200)
-
-        self.card.grid.addWidget(self.table_scroll, 1, 0, 1, 2)
+        self.card.grid.addWidget(self.table, 1, 0, 1, 2)
         self.card.grid.setRowStretch(1, 1)
+        main_layout.addWidget(self.card, 1)
 
-        # --- Botones FUERA de la card: barra fija debajo, nunca sobre la tabla ---
+        # ─── SECTION 3 — Botones de acción (alineados a la derecha) ────────────
+        buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(10)
+        buttons_layout.addStretch(1)
         self.btn_open = QPushButton("Abrir")
         self.btn_copy = QPushButton("Copiar URL")
         self.btn_open.clicked.connect(self._open_link)
         self.btn_copy.clicked.connect(self._copy_link)
+        buttons_layout.addWidget(self.btn_open, 0)
+        buttons_layout.addWidget(self.btn_copy, 0)
+        main_layout.addLayout(buttons_layout, 0)
 
-        self.bottom_bar = QWidget()
-        self.bottom_bar.setObjectName("LinksBottomBar")
-        bar_lay = QHBoxLayout(self.bottom_bar)
-        bar_lay.setContentsMargins(0, 12, 0, 0)
-        bar_lay.setSpacing(10)
-        bar_lay.addStretch(1)
-        bar_lay.addWidget(self.btn_open, 0)
-        bar_lay.addWidget(self.btn_copy, 0)
+        # ─── SECTION 4 — Footer: autor izquierda, checkbox derecha ───────────
+        footer_layout = QHBoxLayout()
+        footer_layout.setContentsMargins(0, 12, 0, 0)
+        footer_layout.setSpacing(0)
+        self.footer_lbl = QLabel("Hecho por: Iván Martínez")
+        footer_layout.addWidget(self.footer_lbl, 0, Qt.AlignLeft)
+        footer_layout.addStretch(1)
+        self.chk_startup = ModernCheckBox("Iniciar con Windows")
+        footer_layout.addWidget(self.chk_startup, 0, Qt.AlignRight)
+        main_layout.addLayout(footer_layout, 0)
 
-        lay.addWidget(self.bottom_bar, 0)
-
-        # Estilos
         self.set_theme(self._theme)
-
-        # Demo visual (solo UI)
         self._seed_demo()
 
     def _get_status_bus(self):
-        """Obtiene el StatusBus de la ventana si está disponible (p. ej. MainWindow)."""
         win = self.window()
         return getattr(win, "status_bus", None)
 
     def _get_selected_url(self) -> tuple[str | None, str | None]:
-        """Devuelve (nombre, url) de la fila seleccionada, o (None, None) si no hay selección."""
         row = self.table.currentRow()
         if row < 0:
             return None, None
@@ -282,7 +268,7 @@ class LinksTab(QWidget):
                 status_bus.set_status("")
                 status_bus.notify("error", "Links", f"No se pudo copiar:\n{e}", 5000)
 
-    def _seed_demo(self):
+    def _seed_demo(self) -> None:
         demo = [
             ("Manual App Mobile", "https://cdst-ar.github.io/ST/appmobile"),
             ("Instructivos contadores/ST", "https://sites.google.com/…/calendarict"),
@@ -304,19 +290,10 @@ class LinksTab(QWidget):
 
         self.table.setStyleSheet(_table_qss(self._theme))
 
-        # Scroll area: transparente, barra de scroll visible
-        bg = self._theme.get("card_bg", "#2A2A2A")
-        border = self._theme.get("card_border", "#3A3A3A")
-        self.table_scroll.setStyleSheet(f"""
-            QScrollArea {{ background: transparent; border: none; }}
-            QScrollBar:vertical {{ background: {bg}; border-radius: 6px; width: 10px; margin: 0; }}
-            QScrollBar::handle:vertical {{ background: #555; border-radius: 5px; min-height: 24px; }}
-            QScrollBar::handle:vertical:hover {{ background: #666; }}
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
-        """)
-
-        self.bottom_bar.setStyleSheet("QWidget#LinksBottomBar { background: transparent; border: none; }")
-
         btn_qss = _small_btn_qss(self._theme)
         self.btn_open.setStyleSheet(btn_qss)
         self.btn_copy.setStyleSheet(btn_qss)
+
+        muted = self._theme.get("muted", "#B8B8B8")
+        self.footer_lbl.setStyleSheet(f"color: {muted}; background: transparent; border: none;")
+        self.chk_startup.set_theme(self._theme)

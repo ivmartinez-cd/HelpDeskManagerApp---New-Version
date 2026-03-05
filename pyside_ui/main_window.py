@@ -3,7 +3,8 @@ from __future__ import annotations
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QStackedWidget, QToolButton, QSizeGrip
+    QMainWindow, QWidget, QLabel, QVBoxLayout, QHBoxLayout, QStackedWidget, QToolButton, QSizeGrip,
+    QMenu,
 )
 from PySide6 import QtWidgets
 
@@ -42,6 +43,13 @@ class _ProTitleBar(QWidget):
         self._icon.setFixedSize(16, 16)
         self._icon.setScaledContents(True)
         self._icon.setVisible(False)
+
+        self._btn_menu = QToolButton()
+        self._btn_menu.setObjectName("ProWinBtn")
+        self._btn_menu.setText("☰")
+        self._btn_menu.setToolTip("Menú")
+        self._btn_menu.clicked.connect(self._show_app_menu)
+        lay.addWidget(self._btn_menu, 0, Qt.AlignVCenter)
 
         self._title = QLabel(parent.windowTitle())
         self._title.setObjectName("ProMainTitle")
@@ -100,6 +108,18 @@ class _ProTitleBar(QWidget):
         # lo dejo desactivado para no cambiar UX (podés activarlo si querés)
         super().mouseDoubleClickEvent(e)
 
+    def _show_app_menu(self) -> None:
+        """Muestra el menú de la aplicación como popup (evita ventana nativa del menubar)."""
+        mb = self._mw.menuBar()
+        if not mb:
+            return
+        popup = QMenu(self)
+        for act in mb.actions():
+            if act.menu():
+                popup.addMenu(act.menu())
+        if popup.actions():
+            popup.exec(self._btn_menu.mapToGlobal(self._btn_menu.rect().bottomLeft()))
+
 
 class MainWindow(QMainWindow):
     def __init__(self, app_icon: QIcon | None = None):
@@ -126,8 +146,10 @@ class MainWindow(QMainWindow):
         self.toast_mgr = ToastManager(self)
         self.status_bus.notify_requested.connect(self.toast_mgr.show)
 
-        # Menú (queda dentro del client area)
+        # Menú: se construye pero se oculta para evitar segunda ventana con FramelessWindowHint.
+        # El acceso al menú es mediante el botón ☰ en la titlebar (_show_app_menu).
         build_menubar(self, self._noop)
+        self.menuBar().setVisible(False)
 
         root = QWidget()
         self.setCentralWidget(root)
