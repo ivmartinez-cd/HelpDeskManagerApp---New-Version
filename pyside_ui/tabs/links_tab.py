@@ -196,7 +196,7 @@ class LinksTab(QWidget):
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        # Scroll area: tabla contenida, sin desborde
+        # Tabla en scroll (fila 1 del grid, con stretch para ocupar el espacio)
         self.table_scroll = QScrollArea()
         self.table_scroll.setWidget(self.table)
         self.table_scroll.setWidgetResizable(True)
@@ -205,22 +205,25 @@ class LinksTab(QWidget):
         self.table_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.table_scroll.setMinimumHeight(200)
 
-        # Barra de acciones: separador + botones, siempre debajo de la tabla
+        self.card.grid.addWidget(self.table_scroll, 1, 0, 1, 2)
+        self.card.grid.setRowStretch(1, 1)
+
+        # Barra de acciones (fila 2): separador + espacio + botones a la derecha
         self.action_bar = QWidget()
         self.action_bar.setObjectName("LinksActionBar")
         action_v = QVBoxLayout(self.action_bar)
-        action_v.setContentsMargins(0, 0, 0, 0)
-        action_v.setSpacing(0)
+        action_v.setContentsMargins(0, 14, 0, 6)
+        action_v.setSpacing(10)
 
         self.action_separator = QFrame()
         self.action_separator.setObjectName("LinksActionSeparator")
         self.action_separator.setFixedHeight(1)
         action_v.addWidget(self.action_separator)
-        action_v.addSpacing(8)
+        action_v.addSpacing(6)
 
         btn_row = QHBoxLayout()
         btn_row.setContentsMargins(0, 0, 0, 0)
-        btn_row.setSpacing(8)
+        btn_row.setSpacing(10)
         btn_row.addStretch(1)
         self.btn_open = QPushButton("Abrir")
         self.btn_copy = QPushButton("Copiar URL")
@@ -231,16 +234,7 @@ class LinksTab(QWidget):
         self.btn_open.clicked.connect(self._open_link)
         self.btn_copy.clicked.connect(self._copy_link)
 
-        # Contenedor tabla + barra en un solo layout vertical: tabla arriba, botones abajo
-        table_and_actions = QWidget()
-        table_and_actions_lay = QVBoxLayout(table_and_actions)
-        table_and_actions_lay.setContentsMargins(0, 0, 0, 0)
-        table_and_actions_lay.setSpacing(0)
-        table_and_actions_lay.addWidget(self.table_scroll, 1)
-        table_and_actions_lay.addWidget(self.action_bar, 0)
-
-        self.card.grid.addWidget(table_and_actions, 1, 0, 1, 2)
-        self.card.grid.setRowStretch(1, 1)
+        self.card.grid.addWidget(self.action_bar, 2, 0, 1, 2)
 
         # Estilos
         self.set_theme(self._theme)
