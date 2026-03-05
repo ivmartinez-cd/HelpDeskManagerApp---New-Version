@@ -160,29 +160,25 @@ class LinksTab(QWidget):
         self._theme = theme or {}
 
         lay = QVBoxLayout(self)
-        # Margen inferior para que la sombra del Card no se recorte (blur 24, offset 4)
         lay.setContentsMargins(0, 0, 0, 36)
         lay.setSpacing(0)
 
         self.card = Card("Links")
-        lay.addWidget(self.card, 1)  # stretch 1: la card ocupa todo el alto disponible
+        lay.addWidget(self.card, 1)
 
-        # --- Fila búsqueda + filtro (sin etiqueta "Filtrar") ---
+        # --- Fila búsqueda + filtro ---
         filter_row = QHBoxLayout()
         filter_row.setSpacing(10)
-
         self.ed_filter = QLineEdit()
         self.ed_filter.setPlaceholderText("Buscar por nombre o URL…")
         filter_row.addWidget(self.ed_filter, 1)
-
         self.cmb_group = QComboBox()
         self.cmb_group.addItems(["Todos", "Manuales", "Documentación", "Otros"])
         self.cmb_group.setFixedWidth(130)
         filter_row.addWidget(self.cmb_group, 0)
-
         self.card.grid.addLayout(filter_row, 0, 0, 1, 2)
 
-        # --- Tabla ---
+        # --- Solo tabla dentro de la card (sin botones dentro) ---
         self.table = QTableWidget(0, 2)
         self.table.setHorizontalHeaderLabels(["Nombre", "URL"])
         self.table.verticalHeader().setVisible(False)
@@ -191,12 +187,10 @@ class LinksTab(QWidget):
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
-
         hdr = self.table.horizontalHeader()
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        # Tabla en scroll (fila 1 del grid, con stretch para ocupar el espacio)
         self.table_scroll = QScrollArea()
         self.table_scroll.setWidget(self.table)
         self.table_scroll.setWidgetResizable(True)
@@ -208,33 +202,22 @@ class LinksTab(QWidget):
         self.card.grid.addWidget(self.table_scroll, 1, 0, 1, 2)
         self.card.grid.setRowStretch(1, 1)
 
-        # Barra de acciones (fila 2): separador + espacio + botones a la derecha
-        self.action_bar = QWidget()
-        self.action_bar.setObjectName("LinksActionBar")
-        action_v = QVBoxLayout(self.action_bar)
-        action_v.setContentsMargins(0, 14, 0, 6)
-        action_v.setSpacing(10)
-
-        self.action_separator = QFrame()
-        self.action_separator.setObjectName("LinksActionSeparator")
-        self.action_separator.setFixedHeight(1)
-        action_v.addWidget(self.action_separator)
-        action_v.addSpacing(6)
-
-        btn_row = QHBoxLayout()
-        btn_row.setContentsMargins(0, 0, 0, 0)
-        btn_row.setSpacing(10)
-        btn_row.addStretch(1)
+        # --- Botones FUERA de la card: barra fija debajo, nunca sobre la tabla ---
         self.btn_open = QPushButton("Abrir")
         self.btn_copy = QPushButton("Copiar URL")
-        btn_row.addWidget(self.btn_open, 0)
-        btn_row.addWidget(self.btn_copy, 0)
-        action_v.addLayout(btn_row)
-
         self.btn_open.clicked.connect(self._open_link)
         self.btn_copy.clicked.connect(self._copy_link)
 
-        self.card.grid.addWidget(self.action_bar, 2, 0, 1, 2)
+        self.bottom_bar = QWidget()
+        self.bottom_bar.setObjectName("LinksBottomBar")
+        bar_lay = QHBoxLayout(self.bottom_bar)
+        bar_lay.setContentsMargins(0, 12, 0, 0)
+        bar_lay.setSpacing(10)
+        bar_lay.addStretch(1)
+        bar_lay.addWidget(self.btn_open, 0)
+        bar_lay.addWidget(self.btn_copy, 0)
+
+        lay.addWidget(self.bottom_bar, 0)
 
         # Estilos
         self.set_theme(self._theme)
@@ -332,13 +315,7 @@ class LinksTab(QWidget):
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
         """)
 
-        # Separador y barra de acciones (mismo borde que la card)
-        self.action_separator.setStyleSheet(f"""
-            QFrame#LinksActionSeparator {{ background: {border}; border: 0; }}
-        """)
-        self.action_bar.setStyleSheet(f"""
-            QWidget#LinksActionBar {{ background: transparent; border: none; }}
-        """)
+        self.bottom_bar.setStyleSheet("QWidget#LinksBottomBar { background: transparent; border: none; }")
 
         btn_qss = _small_btn_qss(self._theme)
         self.btn_open.setStyleSheet(btn_qss)

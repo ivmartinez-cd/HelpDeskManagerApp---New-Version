@@ -1,14 +1,17 @@
 # pyside_ui/app.py
 from __future__ import annotations
 
-import sys
+import atexit
 import os
+import sys
 from pathlib import Path
 
 from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QIcon
 
 from pyside_ui.main_window import MainWindow
+
+_LOCK_FILE: Path | None = None
 
 
 def _set_windows_appusermodelid(app_id: str) -> None:
@@ -32,8 +35,41 @@ def _load_app_icon() -> QIcon:
     return QIcon(str(icon_path))
 
 
+def _single_instance_lock() -> bool:
+    """True si esta instancia puede seguir; False si ya hay otra ventana (evita 2 ventanas)."""
+    global _LOCK_FILE
+    import tempfile
+    lock_dir = Path(tempfile.gettempdir())
+    lock_path = lock_dir / "HelpDeskManagerApp.PySide6.lock"
+    try:
+        if lock_path.exists():
+            try:
+                pid = int(lock_path.read_text().strip())
+            except (ValueError, OSError):
+                pid = None
+            if pid is not None and _process_exists(pid):
+                return False
+            lock_path.unlink(missing_ok=True)
+        lock_path.write_text(str(os.getpid()))
+        _LOCK_FILE = lock_path
+        atexit.register(lambda: lock_path.unlink(missing_ok=True))
+        return True
+    except Exception:
+        return True
+
+
+def _process_exists(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+        return True
+    except OSError:
+        return False
+
+
 def main() -> int:
-    # Para que el icono se vea bien en taskbar (Windows)
+    if not _single_instance_lock():
+        return 0
+
     _set_windows_appusermodelid("HelpDeskManagerApp.PySide6.Prototype")
 
     app = QApplication(sys.argv)
