@@ -140,30 +140,46 @@ class MainWindow(QMainWindow):
         self.titlebar.set_icon(self._app_icon)
         self.v.addWidget(self.titlebar, 0)
 
-        # Contenedor interno (márgenes y spacing estándar para que la UI se muestre correctamente)
+        # Contenedor interno (márgenes alineados con área de contenido)
         self.inner = QWidget()
         self.inner_lay = QVBoxLayout(self.inner)
         self.inner_lay.setContentsMargins(28, 22, 28, 22)
-        self.inner_lay.setSpacing(12)
+        self.inner_lay.setSpacing(14)
 
-        # Header (título + subtítulo)
+        # Header: [ Icono + Título/Subtítulo ]  stretch  [ Theme Toggle ]
         header_row = QHBoxLayout()
         header_row.setSpacing(12)
 
+        # Bloque izquierdo: icono opcional + título y subtítulo
+        left_outer = QHBoxLayout()
+        left_outer.setSpacing(10)
+
+        self.header_icon = QLabel()
+        self.header_icon.setFixedSize(24, 24)
+        self.header_icon.setScaledContents(True)
+        if self._app_icon and not self._app_icon.isNull():
+            self.header_icon.setPixmap(self._app_icon.pixmap(24, 24))
+            self.header_icon.setVisible(True)
+        else:
+            self.header_icon.setVisible(False)
+        left_outer.addWidget(self.header_icon, 0, Qt.AlignVCenter)
+
         left = QVBoxLayout()
-        left.setSpacing(6)
+        left.setSpacing(5)
 
         self.h1 = QLabel("HelpDeskManagerApp")
-        self.h1.setFont(QFont("Segoe UI", 24, QFont.Bold))
+        self.h1.setFont(QFont("Segoe UI", 20, QFont.Bold))
         left.addWidget(self.h1)
 
         self.h2 = QLabel("Gestión de mesa de ayuda • Operaciones")
-        self.h2.setFont(QFont("Segoe UI", 12))
+        self.h2.setFont(QFont("Segoe UI", 11))
         left.addWidget(self.h2)
 
-        header_row.addLayout(left, 1)
+        left_outer.addLayout(left, 1)
+        header_row.addLayout(left_outer, 0)
 
-        # ✅ ThemeIconButton NO tiene clicked(), usa toggled(bool)
+        header_row.addStretch(1)
+
         self.theme_btn = ThemeIconButton()
         self.theme_btn.toggled.connect(self.on_toggle_theme)
         header_row.addWidget(self.theme_btn, 0, Qt.AlignRight | Qt.AlignVCenter)
@@ -297,7 +313,7 @@ class MainWindow(QMainWindow):
         """)
 
         self.h1.setStyleSheet(f"color: {t['orange']};")
-        self.h2.setStyleSheet(f"color: {t['blue']};")
+        self.h2.setStyleSheet(f"color: {t.get('muted', t.get('blue', '#888888'))};")
         self.footer_lbl.setStyleSheet(f"color: {t['muted']};")
         self.global_status_lbl.setStyleSheet(f"color: {t['muted']};")
 
