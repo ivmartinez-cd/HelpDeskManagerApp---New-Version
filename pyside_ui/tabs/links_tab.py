@@ -104,9 +104,9 @@ def _table_qss(theme: dict) -> str:
             background: {bg};
             color: {text};
             border: 1px solid {border};
-            border-radius: 16px;
+            border-radius: 14px;
             gridline-color: {border};
-            padding: 6px;
+            padding: 4px;
 
             /* Evita el contorno de foco "viejo" */
             outline: 0;
@@ -158,8 +158,8 @@ class LinksTab(QWidget):
         self._theme = theme or {}
 
         lay = QVBoxLayout(self)
-        # Margen inferior para que la sombra del Card no se recorte (blur 36 + offset y 10)
-        lay.setContentsMargins(0, 0, 0, 48)
+        # Margen inferior para que la sombra del Card no se recorte (blur 24, offset 4)
+        lay.setContentsMargins(0, 0, 0, 36)
         lay.setSpacing(0)
 
         self.card = Card("Links")
@@ -194,14 +194,13 @@ class LinksTab(QWidget):
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        self.card.grid.setVerticalSpacing(10)
         self.card.grid.addWidget(self.table, 1, 0, 1, 2)
         self.card.grid.setRowStretch(1, 1)
         self.table.setMinimumHeight(280)
 
-        # --- Botonera (espacio superior ~12px vía grid vertical spacing) ---
+        # --- Botonera: alineada a la derecha, 12px sobre la fila, 8px entre botones ---
         btn_row = QHBoxLayout()
-        btn_row.setSpacing(10)
+        btn_row.setSpacing(8)
         btn_row.setContentsMargins(0, 12, 0, 0)
         btn_row.addStretch(1)
         self.btn_open = QPushButton("Abrir")

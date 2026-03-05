@@ -16,8 +16,8 @@ class STCTab(QWidget):
         self._status_bus = status_bus
 
         lay = QVBoxLayout(self)
-        # Margen inferior para que la sombra del Card no se recorte (blur 36 + offset y 10)
-        lay.setContentsMargins(0, 0, 0, 48)
+        # Margen inferior para que la sombra del Card no se recorte (blur 24, offset 4)
+        lay.setContentsMargins(0, 0, 0, 36)
         lay.setSpacing(0)
 
         self.card = Card("Herramientas STC")

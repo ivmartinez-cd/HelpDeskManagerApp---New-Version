@@ -17,38 +17,38 @@ class Card(QFrame):
         self.setMinimumHeight(360)
 
         self.v = QVBoxLayout(self)
-        self.v.setContentsMargins(22, 20, 22, 20)
-        self.v.setSpacing(12)
+        self.v.setContentsMargins(20, 18, 20, 18)
+        self.v.setSpacing(0)
 
-        # ---- Header (solo título) ----
+        # ---- Título ----
         top = QHBoxLayout()
         top.setSpacing(10)
-
         self.title_lbl = QLabel(title)
         self.title_lbl.setFont(QFont("Segoe UI", 17, QFont.DemiBold))
         top.addWidget(self.title_lbl, 1)
-
         self.v.addLayout(top)
+        self.v.addSpacing(6)
 
-        # ---- Subrayado moderno ----
+        # ---- Divider (1px, theme card_border) ----
         self.title_rule = QFrame()
         self.title_rule.setObjectName("title_rule")
-        self.title_rule.setFixedHeight(2)
+        self.title_rule.setFixedHeight(1)
         self.v.addWidget(self.title_rule)
+        self.v.addSpacing(10)
 
-        # ---- Content grid (stretch 1: ocupa el espacio restante de la card) ----
+        # ---- Content grid (spacing 12px, stretch 1) ----
         self.grid = QGridLayout()
-        self.grid.setHorizontalSpacing(16)
-        self.grid.setVerticalSpacing(14)
+        self.grid.setHorizontalSpacing(12)
+        self.grid.setVerticalSpacing(12)
         self.v.addLayout(self.grid, 1)
 
     def set_theme(self, theme: dict):
         self._theme = theme or {}
         apply_shadow(
             self,
-            blur=36,
-            y=10,
-            rgba=self._theme.get("shadow_color", (0, 0, 0, 120)),
+            blur=24,
+            y=4,
+            rgba=self._theme.get("shadow_color", (0, 0, 0, 80)),
         )
 
         self.setStyleSheet(f"""
@@ -67,22 +67,11 @@ class Card(QFrame):
             padding: 0;
         """)
 
-        # Underline (fade soft)
-        accent = self._theme.get("orange", "#FF9A2E")
+        # Divider: 1px, theme card_border
         border = self._theme.get("card_border", "#3a3a3a")
-        bg = self._theme.get("card_bg", "#2b2b2b")
-
         self.title_rule.setStyleSheet(f"""
             QFrame#title_rule {{
-                border-radius: 2px;
-                background: qlineargradient(
-                    x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {bg},
-                    stop:0.08 {border},
-                    stop:0.22 {accent},
-                    stop:0.78 {accent},
-                    stop:0.92 {border},
-                    stop:1 {bg}
-                );
+                background: {border};
+                border: 0;
             }}
         """)
