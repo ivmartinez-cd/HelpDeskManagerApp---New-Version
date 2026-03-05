@@ -8,7 +8,7 @@ from typing import Optional
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
-from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, warn
+from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, get_theme, warn
 
 
 # =====================
@@ -58,8 +58,9 @@ class EstimadorManualDialog(BaseProDialog):
             w=860,
         )
 
-        if theme:
-            apply_dialog_style(self, theme)
+        self._theme = theme if theme else get_theme(parent)
+        if self._theme:
+            apply_dialog_style(self, self._theme)
 
         # ✅ Always-on-top + no modal (como Tkinter)
         self.setWindowFlag(QtCore.Qt.WindowType.WindowStaysOnTopHint, True)
@@ -132,14 +133,15 @@ class EstimadorManualDialog(BaseProDialog):
 
     def _group_box(self, title: str) -> QtWidgets.QGroupBox:
         gb = QtWidgets.QGroupBox(title)
-        gb.setStyleSheet("""
-            QGroupBox { color: rgba(255,255,255,0.92); }
-            QGroupBox::title {
+        text_color = (self._theme or {}).get("text", "#EAEAEA")
+        gb.setStyleSheet(f"""
+            QGroupBox {{ color: {text_color}; }}
+            QGroupBox::title {{
                 subcontrol-origin: margin;
                 subcontrol-position: top left;
                 padding: 0 6px;
-                color: rgba(255,255,255,0.92);
-            }
+                color: {text_color};
+            }}
         """)
         lay = QtWidgets.QGridLayout(gb)
         lay.setContentsMargins(14, 12, 14, 12)

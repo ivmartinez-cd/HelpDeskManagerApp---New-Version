@@ -1,32 +1,55 @@
 from __future__ import annotations
 
 from collections import deque
+from typing import Optional
+
 from PySide6 import QtCore, QtWidgets
+
+
+def _toast_level_colors() -> dict:
+    """Colores por nivel cuando no hay theme (comportamiento actual)."""
+    return {
+        "success": "#2ecc71",
+        "warning": "#f1c40f",
+        "error": "#e74c3c",
+        "info": "#3498db",
+    }
 
 
 class Toast(QtWidgets.QFrame):
     closed = QtCore.Signal()
 
-    def __init__(self, parent, level: str, title: str, message: str, timeout_ms: int = 3000):
+    def __init__(
+        self,
+        parent: QtWidgets.QWidget,
+        level: str,
+        title: str,
+        message: str,
+        timeout_ms: int = 3000,
+        theme: Optional[dict] = None,
+    ):
         super().__init__(parent, QtCore.Qt.ToolTip)
         self.setAttribute(QtCore.Qt.WA_TransparentForMouseEvents)
         self.setWindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.ToolTip)
 
-        color = {
-            "success": "#2ecc71",
-            "warning": "#f1c40f",
-            "error": "#e74c3c",
-            "info": "#3498db",
-        }.get(level, "#3498db")
+        level_colors = _toast_level_colors()
+        color = level_colors.get(level, level_colors["info"])
+
+        if theme:
+            title_color = theme.get("text", "#FFFFFF")
+            msg_color = theme.get("muted", "#EEEEEE")
+        else:
+            title_color = "#FFFFFF"
+            msg_color = "#EEEEEE"
 
         lay = QtWidgets.QVBoxLayout(self)
         lay.setContentsMargins(12, 8, 12, 8)
         lay.setSpacing(4)
 
         lbl_title = QtWidgets.QLabel(title)
-        lbl_title.setStyleSheet("font-weight: 600; color: white;")
+        lbl_title.setStyleSheet(f"font-weight: 600; color: {title_color};")
         lbl_msg = QtWidgets.QLabel(message)
-        lbl_msg.setStyleSheet("color: #eee;")
+        lbl_msg.setStyleSheet(f"color: {msg_color};")
         lbl_msg.setWordWrap(True)
 
         lay.addWidget(lbl_title)
@@ -44,10 +67,10 @@ class Toast(QtWidgets.QFrame):
         self.adjustSize()
         QtCore.QTimer.singleShot(timeout_ms, self._close)
 
-    def _close(self):
+    def _close(self) -> None:
         self.close()
 
-    def closeEvent(self, event):
+    def closeEvent(self, event: QtCore.QEvent) -> None:
         self.closed.emit()
         super().closeEvent(event)
 
@@ -62,7 +85,16 @@ class ToastManager(QtCore.QObject):
         self._queue: deque[tuple] = deque()
         self._current: Toast | None = None
 
-    def show(self, level: str, title: str, message: str, timeout_ms: int = 3000):
+    def _get_theme(self) -> Optional[dict]:
+        """Obtiene el tema de la ventana si está disponible."""
+        try:
+            w = self._parent.window()
+            t = getattr(w, "theme", None)
+            return t if isinstance(t, dict) else None
+        except Exception:
+            return None
+
+    def show(self, level: str, title: str, message: str, timeout_ms: int = 3000) -> None:
         # ✅ PRIORIDAD: resultados finales de FTP (evita desfasaje con los diálogos siguientes)
         # - success/warning/error con título "FTP" se muestran inmediatamente
         # - cortan la cola y cierran el toast actual
@@ -74,8 +106,7 @@ class ToastManager(QtCore.QObject):
         if self._current is None:
             self._show_next(first=True)
 
-    def _show_priority(self, level: str, title: str, message: str, timeout_ms: int):
-        # Limpia cola y fuerza a mostrar YA
+    def _show_priority(self, level: str, title: str, message: str, timeout_ms: int) -> None:
         self._queue.clear()
 
         if self._current is not None:
@@ -91,7 +122,7 @@ class ToastManager(QtCore.QObject):
 
         self._show_toast(level, title, message, timeout_ms, first=False)
 
-    def _show_next(self, first: bool = False):
+    def _show_next(self, first: bool = False) -> None:
         if not self._queue:
             self._current = None
             return
@@ -99,11 +130,12 @@ class ToastManager(QtCore.QObject):
         level, title, message, timeout_ms = self._queue.popleft()
         self._show_toast(level, title, message, timeout_ms, first=first)
 
-    def _show_toast(self, level: str, title: str, message: str, timeout_ms: int, *, first: bool):
+    def _show_toast(self, level: str, title: str, message: str, timeout_ms: int, *, first: bool) -> None:
         if first:
             timeout_ms += self.FIRST_TOAST_EXTRA_MS
 
-        toast = Toast(self._parent, level, title, message, timeout_ms)
+        theme = self._get_theme()
+        toast = Toast(self._parent, level, title, message, timeout_ms, theme=theme)
         toast.closed.connect(self._on_toast_closed)
 
         geo = self._parent.geometry()
@@ -114,6 +146,6 @@ class ToastManager(QtCore.QObject):
         self._current = toast
         toast.show()
 
-    def _on_toast_closed(self):
+    def _on_toast_closed(self) -> None:
         self._current = None
         self._show_next(first=False)

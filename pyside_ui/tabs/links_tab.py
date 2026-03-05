@@ -94,7 +94,7 @@ def _inputs_qss(theme: dict) -> str:
 
 
 def _table_qss(theme: dict) -> str:
-    bg = theme.get("card_bg", "#202020")
+    bg = theme.get("card_bg", "#2A2A2A")
     text = theme.get("text", "#FFFFFF")
     border = theme.get("card_border", "#3A3A3A")
     hover = theme.get("btn_hover", "#333333")
