@@ -36,11 +36,11 @@ class Card(QFrame):
         self.title_rule.setFixedHeight(2)
         self.v.addWidget(self.title_rule)
 
-        # ---- Content grid ----
+        # ---- Content grid (stretch 1: ocupa el espacio restante de la card) ----
         self.grid = QGridLayout()
         self.grid.setHorizontalSpacing(16)
         self.grid.setVerticalSpacing(14)
-        self.v.addLayout(self.grid)
+        self.v.addLayout(self.grid, 1)
 
     def set_theme(self, theme: dict):
         self._theme = theme or {}

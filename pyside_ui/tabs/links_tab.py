@@ -165,7 +165,7 @@ class LinksTab(QWidget):
         lay.setSpacing(0)
 
         self.card = Card("Links")
-        lay.addWidget(self.card, 0, Qt.AlignTop)
+        lay.addWidget(self.card, 1)  # stretch 1: la card ocupa todo el alto disponible
 
         # --- Fila filtros ---
         row = QHBoxLayout()
@@ -209,6 +209,8 @@ class LinksTab(QWidget):
         hdr.setMinimumSectionSize(140)
 
         self.card.grid.addWidget(self.table, 1, 0, 1, 2)
+        self.card.grid.setRowStretch(1, 1)  # la fila de la tabla se expande con el espacio disponible
+        self.table.setMinimumHeight(280)  # altura mínima para ver varios links sin tanto scroll
 
         # --- Botonera ---
         btn_row = QHBoxLayout()
