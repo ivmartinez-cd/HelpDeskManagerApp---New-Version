@@ -6,11 +6,13 @@ import webbrowser
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QApplication,
+    QFrame,
     QHeaderView,
     QHBoxLayout,
     QLineEdit,
     QComboBox,
     QPushButton,
+    QScrollArea,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -194,9 +196,17 @@ class LinksTab(QWidget):
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
 
-        self.card.grid.addWidget(self.table, 1, 0, 1, 2)
+        # Scroll area para que la tabla no desborde la card: contenido dentro del borde
+        self.table_scroll = QScrollArea()
+        self.table_scroll.setWidget(self.table)
+        self.table_scroll.setWidgetResizable(True)
+        self.table_scroll.setFrameShape(QFrame.Shape.NoFrame)
+        self.table_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.table_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.table_scroll.setMinimumHeight(200)
+
+        self.card.grid.addWidget(self.table_scroll, 1, 0, 1, 2)
         self.card.grid.setRowStretch(1, 1)
-        self.table.setMinimumHeight(280)
 
         # --- Botonera: alineada a la derecha, 12px sobre la fila, 8px entre botones ---
         btn_row = QHBoxLayout()
@@ -297,6 +307,15 @@ class LinksTab(QWidget):
         self.cmb_group.setStyleSheet(qss_inputs)
 
         self.table.setStyleSheet(_table_qss(self._theme))
+
+        # Scroll area transparente para integrarse con la card
+        bg = self._theme.get("card_bg", "#2A2A2A")
+        self.table_scroll.setStyleSheet(f"""
+            QScrollArea {{ background: transparent; border: none; }}
+            QScrollBar:vertical {{ background: {bg}; border-radius: 6px; width: 10px; margin: 0; }}
+            QScrollBar::handle:vertical {{ background: #555; border-radius: 5px; min-height: 24px; }}
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+        """)
 
         btn_qss = _small_btn_qss(self._theme)
         self.btn_open.setStyleSheet(btn_qss)
