@@ -37,10 +37,11 @@ class _ProTitleBar(QWidget):
         lay.setContentsMargins(12, 8, 8, 8)
         lay.setSpacing(10)
 
-        # icono + titulo
+        # Sin icono en la barra de título (solo menú y botones)
         self._icon = QLabel()
         self._icon.setFixedSize(16, 16)
         self._icon.setScaledContents(True)
+        self._icon.setVisible(False)
 
         self._title = QLabel(parent.windowTitle())
         self._title.setObjectName("ProMainTitle")
@@ -48,7 +49,6 @@ class _ProTitleBar(QWidget):
         if not parent.windowTitle():
             self._title.setVisible(False)
 
-        lay.addWidget(self._icon, 0, Qt.AlignVCenter)
         lay.addWidget(self._title, 0, Qt.AlignVCenter)
         lay.addStretch(1)
 
@@ -148,9 +148,22 @@ class MainWindow(QMainWindow):
         self.inner_lay.setContentsMargins(28, 12, 28, 22)
         self.inner_lay.setSpacing(14)
 
-        # Header: [ Título/Subtítulo ]  stretch  [ Theme Toggle ]
+        # Header: [ Icono + Título/Subtítulo ]  stretch  [ Theme Toggle ]
         header_row = QHBoxLayout()
         header_row.setSpacing(12)
+
+        left_outer = QHBoxLayout()
+        left_outer.setSpacing(10)
+
+        self.header_icon = QLabel()
+        self.header_icon.setFixedSize(24, 24)
+        self.header_icon.setScaledContents(True)
+        if self._app_icon and not self._app_icon.isNull():
+            self.header_icon.setPixmap(self._app_icon.pixmap(24, 24))
+            self.header_icon.setVisible(True)
+        else:
+            self.header_icon.setVisible(False)
+        left_outer.addWidget(self.header_icon, 0, Qt.AlignVCenter)
 
         left = QVBoxLayout()
         left.setSpacing(5)
@@ -163,7 +176,8 @@ class MainWindow(QMainWindow):
         self.h2.setFont(QFont("Segoe UI", 11))
         left.addWidget(self.h2)
 
-        header_row.addLayout(left, 0)
+        left_outer.addLayout(left, 1)
+        header_row.addLayout(left_outer, 0)
 
         header_row.addStretch(1)
 
