@@ -1,11 +1,22 @@
-# pyside_ui/links_tab.py
+# pyside_ui/tabs/links_tab.py
 from __future__ import annotations
+
+import webbrowser
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QComboBox,
-    QTableWidget, QTableWidgetItem, QPushButton, QHeaderView
+    QApplication,
+    QHeaderView,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QComboBox,
+    QPushButton,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
 )
 
 from pyside_ui.widgets import Card
@@ -99,7 +110,7 @@ def _table_qss(theme: dict) -> str:
             gridline-color: {border};
             padding: 6px;
 
-            /* Evita el contorno de foco “viejo” */
+            /* Evita el contorno de foco "viejo" */
             outline: 0;
         }}
 
@@ -113,7 +124,7 @@ def _table_qss(theme: dict) -> str:
             color: #111111;
         }}
 
-        /* Quita el focus-rect que genera ese “pill” raro */
+        /* Quita el focus-rect que genera ese "pill" raro */
         QTableWidget::item:focus {{
             outline: none;
         }}
@@ -208,6 +219,9 @@ class LinksTab(QWidget):
         btn_row.addWidget(self.btn_open, 0)
         btn_row.addWidget(self.btn_copy, 0)
 
+        self.btn_open.clicked.connect(self._open_link)
+        self.btn_copy.clicked.connect(self._copy_link)
+
         self.card.grid.addLayout(btn_row, 2, 0, 1, 2)
 
         # Estilos
@@ -215,6 +229,63 @@ class LinksTab(QWidget):
 
         # Demo visual (solo UI)
         self._seed_demo()
+
+    def _get_status_bus(self):
+        """Obtiene el StatusBus de la ventana si está disponible (p. ej. MainWindow)."""
+        win = self.window()
+        return getattr(win, "status_bus", None)
+
+    def _get_selected_url(self) -> tuple[str | None, str | None]:
+        """Devuelve (nombre, url) de la fila seleccionada, o (None, None) si no hay selección."""
+        row = self.table.currentRow()
+        if row < 0:
+            return None, None
+        name_item = self.table.item(row, 0)
+        url_item = self.table.item(row, 1)
+        if url_item is None:
+            return None, None
+        name = name_item.text().strip() if name_item else ""
+        url = url_item.text().strip() if url_item else ""
+        return name or None, url or None
+
+    def _open_link(self) -> None:
+        name, url = self._get_selected_url()
+        if not url:
+            status_bus = self._get_status_bus()
+            if status_bus:
+                status_bus.notify("warning", "Links", "Seleccione un link primero.", 4000)
+            return
+        try:
+            webbrowser.open(url)
+            status_bus = self._get_status_bus()
+            if status_bus:
+                status_bus.set_status(f"Abrir: {name or url}")
+                status_bus.notify("success", "Links", "URL abierta en el navegador.", 3000)
+        except Exception as e:
+            status_bus = self._get_status_bus()
+            if status_bus:
+                status_bus.set_status("")
+                status_bus.notify("error", "Links", f"No se pudo abrir la URL:\n{e}", 5000)
+
+    def _copy_link(self) -> None:
+        name, url = self._get_selected_url()
+        if not url:
+            status_bus = self._get_status_bus()
+            if status_bus:
+                status_bus.notify("warning", "Links", "Seleccione un link primero.", 4000)
+            return
+        try:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(url)
+            status_bus = self._get_status_bus()
+            if status_bus:
+                status_bus.set_status("URL copiada al portapapeles")
+                status_bus.notify("success", "Links", "URL copiada.", 3000)
+        except Exception as e:
+            status_bus = self._get_status_bus()
+            if status_bus:
+                status_bus.set_status("")
+                status_bus.notify("error", "Links", f"No se pudo copiar:\n{e}", 5000)
 
     def _seed_demo(self):
         demo = [
