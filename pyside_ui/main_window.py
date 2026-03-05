@@ -140,13 +140,13 @@ class MainWindow(QMainWindow):
         self.titlebar.set_icon(self._app_icon)
         self.v.addWidget(self.titlebar, 0)
 
-        # Contenedor interno: márgenes para que tabs + card compartan la misma caja visual
+        # Contenedor interno (márgenes y spacing estándar para que la UI se muestre correctamente)
         self.inner = QWidget()
         self.inner_lay = QVBoxLayout(self.inner)
-        self.inner_lay.setContentsMargins(28, 18, 28, 22)
-        self.inner_lay.setSpacing(0)
+        self.inner_lay.setContentsMargins(28, 22, 28, 22)
+        self.inner_lay.setSpacing(12)
 
-        # 1. Header (título + subtítulo)
+        # Header (título + subtítulo)
         header_row = QHBoxLayout()
         header_row.setSpacing(12)
 
@@ -169,19 +169,16 @@ class MainWindow(QMainWindow):
         header_row.addWidget(self.theme_btn, 0, Qt.AlignRight | Qt.AlignVCenter)
 
         self.inner_lay.addLayout(header_row)
-        self.inner_lay.addSpacing(14)  # título/subtítulo → tabs
 
-        # 2. Tabs (navegación), alineados con el contenido de la card
+        # Tabs (navegación), alineados a la izquierda con el contenido de la card
         tabs_row = QHBoxLayout()
-        tabs_row.setContentsMargins(0, 0, 0, 0)
         self.tabs = SegmentedTabs(["Contadores", "STC", "Links"])
         self.tabs.changed.connect(self.on_tab_changed)
         tabs_row.addWidget(self.tabs, 0, Qt.AlignLeft)
         tabs_row.addStretch(1)
         self.inner_lay.addLayout(tabs_row)
-        self.inner_lay.addSpacing(6)  # tabs → card (pegados visualmente)
 
-        # 3. Stack (contenido / card)
+        # Stack (contenido / card)
         self.stack = QStackedWidget()
         self.inner_lay.addWidget(self.stack, 1)
 
@@ -218,7 +215,6 @@ class MainWindow(QMainWindow):
         footer_row.addWidget(footer_wrap, 1)
         footer_row.addWidget(self._grip, 0, Qt.AlignRight | Qt.AlignBottom)
 
-        self.inner_lay.addSpacing(14)  # separación card → footer
         self.inner_lay.addLayout(footer_row)
 
         # Conectar bus → label
