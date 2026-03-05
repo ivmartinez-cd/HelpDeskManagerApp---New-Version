@@ -246,7 +246,7 @@ class MainWindow(QMainWindow):
         self.ftp_controller = getattr(self.contadores_tab, "_ftp_controller", None)
 
     def _build_tab_stc(self):
-        self.stc_tab = STCTab(self.theme)
+        self.stc_tab = STCTab(self.theme, status_bus=self.status_bus)
         self.stack.addWidget(self.stc_tab)
 
     def _build_tab_links(self):
