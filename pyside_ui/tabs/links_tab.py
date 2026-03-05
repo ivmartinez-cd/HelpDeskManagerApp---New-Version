@@ -160,7 +160,8 @@ class LinksTab(QWidget):
         self._theme = theme or {}
 
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
+        # Margen inferior para que la sombra del Card no se recorte (blur 36 + offset y 10)
+        lay.setContentsMargins(0, 0, 0, 48)
         lay.setSpacing(0)
 
         self.card = Card("Links")
