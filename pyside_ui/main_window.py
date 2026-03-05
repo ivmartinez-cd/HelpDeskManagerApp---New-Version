@@ -217,6 +217,9 @@ class MainWindow(QMainWindow):
 
         self.inner_lay.addLayout(footer_row)
 
+        # Añadir el contenedor interno al layout principal (titlebar + inner)
+        self.v.addWidget(self.inner, 1)
+
         # Conectar bus → label
         self.status_bus.status_changed.connect(self._set_global_status)
 
