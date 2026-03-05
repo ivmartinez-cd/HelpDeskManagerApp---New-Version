@@ -208,20 +208,33 @@ class LinksTab(QWidget):
         self.card.grid.addWidget(self.table_scroll, 1, 0, 1, 2)
         self.card.grid.setRowStretch(1, 1)
 
-        # --- Botonera: alineada a la derecha, 12px sobre la fila, 8px entre botones ---
+        # --- Barra de acciones: separador + 8px + botones alineados a la derecha ---
+        self.action_bar = QWidget()
+        self.action_bar.setObjectName("LinksActionBar")
+        action_v = QVBoxLayout(self.action_bar)
+        action_v.setContentsMargins(0, 0, 0, 0)
+        action_v.setSpacing(0)
+
+        self.action_separator = QFrame()
+        self.action_separator.setObjectName("LinksActionSeparator")
+        self.action_separator.setFixedHeight(1)
+        action_v.addWidget(self.action_separator)
+        action_v.addSpacing(8)
+
         btn_row = QHBoxLayout()
+        btn_row.setContentsMargins(0, 0, 0, 0)
         btn_row.setSpacing(8)
-        btn_row.setContentsMargins(0, 12, 0, 0)
         btn_row.addStretch(1)
         self.btn_open = QPushButton("Abrir")
         self.btn_copy = QPushButton("Copiar URL")
         btn_row.addWidget(self.btn_open, 0)
         btn_row.addWidget(self.btn_copy, 0)
+        action_v.addLayout(btn_row)
 
         self.btn_open.clicked.connect(self._open_link)
         self.btn_copy.clicked.connect(self._copy_link)
 
-        self.card.grid.addLayout(btn_row, 2, 0, 1, 2)
+        self.card.grid.addWidget(self.action_bar, 2, 0, 1, 2)
 
         # Estilos
         self.set_theme(self._theme)
@@ -308,13 +321,23 @@ class LinksTab(QWidget):
 
         self.table.setStyleSheet(_table_qss(self._theme))
 
-        # Scroll area transparente para integrarse con la card
+        # Scroll area: transparente, barra de scroll visible
         bg = self._theme.get("card_bg", "#2A2A2A")
+        border = self._theme.get("card_border", "#3A3A3A")
         self.table_scroll.setStyleSheet(f"""
             QScrollArea {{ background: transparent; border: none; }}
             QScrollBar:vertical {{ background: {bg}; border-radius: 6px; width: 10px; margin: 0; }}
             QScrollBar::handle:vertical {{ background: #555; border-radius: 5px; min-height: 24px; }}
+            QScrollBar::handle:vertical:hover {{ background: #666; }}
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
+        """)
+
+        # Separador y barra de acciones (mismo borde que la card)
+        self.action_separator.setStyleSheet(f"""
+            QFrame#LinksActionSeparator {{ background: {border}; border: 0; }}
+        """)
+        self.action_bar.setStyleSheet(f"""
+            QWidget#LinksActionBar {{ background: transparent; border: none; }}
         """)
 
         btn_qss = _small_btn_qss(self._theme)
