@@ -1,17 +1,20 @@
 # ip_ranges_txt.py
 import os, re, ipaddress
-from tkinter import filedialog, messagebox
 
 def _find_ipv4(text: str):
     # capta 1.2.3.4, 1.2.3.4/xx, 1.2.3.4:puerto
     cand = re.findall(r'\b(?:\d{1,3}\.){3}\d{1,3}(?:/\d{1,2})?\b', text)
     out = []
+    skipped = []
     for c in cand:
         try:
             ip = ipaddress.IPv4Interface(c).ip if "/" in c else ipaddress.IPv4Address(c)
             out.append(ip)
         except Exception:
-            pass
+            skipped.append(c)
+    if skipped:
+        import warnings
+        warnings.warn(f"Se ignoraron {len(skipped)} IPs/CIDRs inválidos: {skipped[:10]}", stacklevel=2)
     return out
 
 def _net24_key(ip):
@@ -22,6 +25,7 @@ def _range24(a,b,c):
     return f"{a}.{b}.{c}.1-{a}.{b}.{c}.254"
 
 def generate_ip_ranges_txt(parent=None):
+    from tkinter import filedialog, messagebox
     """
     Lee un TXT con IPs, genera rangos /24 (deduplicados y ordenados)
     y los guarda en un TXT (una sola linea separada por comas).

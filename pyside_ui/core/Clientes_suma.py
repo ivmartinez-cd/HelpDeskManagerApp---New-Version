@@ -1,7 +1,6 @@
 import os
 import numpy as np
 import pandas as pd
-from tkinter import filedialog, simpledialog, messagebox
 from datetime import datetime
 
 
@@ -120,6 +119,7 @@ def convertir_xls_a_csv_arcos_headless(
 
 
 def convertir_xls_a_csv_arcos(archivos_xls=None, carpeta_salida=None, parent=None):
+    from tkinter import filedialog, simpledialog, messagebox
     """
     Convierte uno o varios XLS/XLSX al formato CSV requerido.
     Si no se proveen parametros, abre dialogos para pedirlos.

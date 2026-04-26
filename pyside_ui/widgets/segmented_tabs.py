@@ -28,7 +28,9 @@ class SegmentedTabs(QWidget):
             b.clicked.connect(lambda _=False, idx=i: self.set_active(idx))
             b.setMinimumHeight(34)
             b.setMinimumWidth(110 if i == 0 else 90)
-            b.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
+            font_btn = QFont("Segoe UI", 11, QFont.DemiBold)
+            font_btn.setPointSizeF(11)
+            b.setFont(font_btn)
             self._buttons.append(b)
             lay.addWidget(b)
 
@@ -50,9 +52,9 @@ class SegmentedTabs(QWidget):
         t = self._theme or {}
         self.setStyleSheet(f"""
             QWidget#segRoot {{
-                background: {t.get("seg_bg", "#2A2A2A")};
-                border: 1px solid {t.get("card_border", "#3A3A3A")};
-                border-radius: 18px;
+                background: {t.get("seg_bg", "#1A1A1A")};
+                border: 1px solid {t.get("card_border", "#2A2A2A")};
+                border-radius: 20px;
             }}
         """)
 
@@ -64,21 +66,26 @@ class SegmentedTabs(QWidget):
                         color: {t.get("seg_text_selected", "#FFFFFF")};
                         border: none;
                         border-radius: 16px;
-                        padding: 6px 14px;
-                        font: 600 11pt "Segoe UI";
+                        padding: 8px 18px;
+                        font-family: "Segoe UI Variable Display", "Segoe UI";
+                        font-size: 14px;
+                        font-weight: 800;
                     }}
                 """)
             else:
                 b.setStyleSheet(f"""
                     QPushButton {{
-                        background: {t.get("seg_unselected", "#2A2A2A")};
-                        color: {t.get("seg_text", "#EAEAEA")};
+                        background: {t.get("seg_unselected", "transparent")};
+                        color: {t.get("seg_text", "#9CA3AF")};
                         border: none;
                         border-radius: 16px;
-                        padding: 6px 14px;
-                        font: 600 11pt "Segoe UI";
+                        padding: 8px 18px;
+                        font-family: "Segoe UI Variable Display", "Segoe UI";
+                        font-size: 14px;
+                        font-weight: 600;
                     }}
                     QPushButton:hover {{
-                        background: {t.get("seg_hover", "#333333")};
+                        background: {t.get("seg_hover", "#252525")};
+                        color: {t.get("text", "#F5F5F5")};
                     }}
                 """)

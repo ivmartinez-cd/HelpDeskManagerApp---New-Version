@@ -17,6 +17,11 @@ class ModernCheckBox(QWidget):
         self._pressed = False
         self._theme: dict = {}
 
+        # ✅ Blindaje de fuente en constructor (anti-warning -1)
+        font = QFont("Segoe UI", 11, QFont.DemiBold)
+        font.setPointSizeF(10.5)
+        self.setFont(font)
+
         self._box_size = 20
         self._box_radius = 6
         self._gap = 10
@@ -185,7 +190,9 @@ class ModernCheckBox(QWidget):
 
         # Text
         p.setPen(text_col if self.isEnabled() else muted)
-        p.setFont(QFont("Segoe UI", 11, QFont.DemiBold))
+        font = QFont("Segoe UI", 11, QFont.DemiBold)
+        font.setPointSizeF(10.5) # ✅ Aseguramos tamaño explícito para evitar error -1 en algunos sistemas
+        p.setFont(font)
         tx = self._box_size + self._gap
         p.drawText(QRectF(tx, 0, self.width() - tx, self.height()),
                    Qt.AlignVCenter | Qt.AlignLeft, self._text)

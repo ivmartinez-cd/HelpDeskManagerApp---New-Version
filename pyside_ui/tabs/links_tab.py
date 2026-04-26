@@ -1,305 +1,189 @@
 # pyside_ui/tabs/links_tab.py
 from __future__ import annotations
-
 import webbrowser
-
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import (
-    QApplication,
-    QHeaderView,
-    QHBoxLayout,
-    QLineEdit,
-    QComboBox,
-    QPushButton,
-    QTableWidget,
-    QTableWidgetItem,
-    QVBoxLayout,
-    QWidget,
-    QLabel,
+    QApplication, QHeaderView, QHBoxLayout, QLineEdit, QComboBox,
+    QPushButton, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 )
-
-from pyside_ui.widgets import ModernCheckBox
-
-
-def _small_btn_qss(theme: dict) -> str:
-    bg = theme.get("btn_bg", "#2B2B2B")
-    hover = theme.get("btn_hover", "#333333")
-    text = theme.get("text", "#FFFFFF")
-    border = theme.get("card_border", "#3A3A3A")
-    return f"""
-        QPushButton {{
-            background: {bg};
-            color: {text};
-            border: 1px solid {border};
-            border-radius: 14px;
-            padding: 8px 14px;
-            min-height: 36px;
-        }}
-        QPushButton:hover {{
-            background: {hover};
-        }}
-        QPushButton:pressed {{
-            background: {hover};
-        }}
-        QPushButton:disabled {{
-            opacity: 0.55;
-        }}
-    """
-
-
-def _inputs_qss(theme: dict) -> str:
-    bg = theme.get("btn_bg", "#2B2B2B")
-    hover = theme.get("btn_hover", "#333333")
-    text = theme.get("text", "#FFFFFF")
-    border = theme.get("card_border", "#3A3A3A")
-    accent = theme.get("orange", "#FF9A2E")
-
-    return f"""
-        QLineEdit {{
-            background: {bg};
-            color: {text};
-            border: 1px solid {border};
-            border-radius: 14px;
-            padding: 8px 12px;
-            min-height: 36px;
-            selection-background-color: {accent};
-        }}
-        QLineEdit:focus {{
-            border: 1px solid {accent};
-        }}
-
-        QComboBox {{
-            background: {bg};
-            color: {text};
-            border: 1px solid {border};
-            border-radius: 14px;
-            padding: 8px 12px;
-            min-height: 36px;
-        }}
-        QComboBox:hover {{
-            background: {hover};
-        }}
-        QComboBox::drop-down {{
-            border: 0;
-            width: 28px;
-        }}
-        QComboBox QAbstractItemView {{
-            background: {bg};
-            color: {text};
-            border: 1px solid {border};
-            selection-background-color: {accent};
-        }}
-    """
-
-
-def _table_qss(theme: dict) -> str:
-    bg = theme.get("card_bg", "#2A2A2A")
-    text = theme.get("text", "#FFFFFF")
-    border = theme.get("card_border", "#3A3A3A")
-    hover = theme.get("btn_hover", "#333333")
-    accent = theme.get("orange", "#FF9A2E")
-    muted = theme.get("muted", "#B0B0B0")
-
-    return f"""
-        QTableWidget {{
-            background: {bg};
-            color: {text};
-            border: 1px solid {border};
-            border-radius: 14px;
-            gridline-color: {border};
-            padding: 4px;
-            outline: 0;
-        }}
-        QTableWidget::item:selected {{
-            background: {accent};
-            color: #111111;
-        }}
-        QTableWidget::item:selected:active {{
-            background: {accent};
-            color: #111111;
-        }}
-        QTableWidget::item:focus {{
-            outline: none;
-        }}
-        QHeaderView::section {{
-            background: transparent;
-            color: {muted};
-            border: 0;
-            border-bottom: 1px solid {border};
-            padding: 8px 10px;
-            font-weight: 600;
-        }}
-        QTableWidget::item {{
-            padding: 8px 10px;
-            border: 0;
-        }}
-        QTableWidget::item:hover {{
-            background: {hover};
-        }}
-        QTableCornerButton::section {{
-            background: transparent;
-            border: 0;
-        }}
-    """
-
+from .contadores_tab import SectionHeader
+from ..widgets.effects import apply_shadow
+from ..theme.theme import TAB_MARGINS
 
 class LinksTab(QWidget):
-    """
-    Tab Links: solo define UI. Layout simple con QVBoxLayout.
-    Sin ventanas ni diálogos; solo widgets y layouts.
-    """
-
     def __init__(self, theme: dict, parent=None):
         super().__init__(parent)
         self._theme = theme or {}
 
+        # Layout Principal
         main = QVBoxLayout(self)
-        main.setContentsMargins(20, 20, 20, 36)
-        main.setSpacing(16)
+        main.setContentsMargins(*TAB_MARGINS)
+        main.setSpacing(18)
 
-        # 1. Title label
-        self._title_lbl = QLabel("Links")
-        self._title_lbl.setObjectName("LinksTabTitle")
-        self._title_lbl.setFont(QFont("Segoe UI", 17, QFont.DemiBold))
-        main.addWidget(self._title_lbl, 0)
+        # 1. Cabecera
+        main.addWidget(SectionHeader("Directorio de Enlaces y Documentación"))
 
-        # 2. Search row: search expanding, filter right
-        search_row = QHBoxLayout()
-        search_row.setSpacing(8)
+        # 2. Fila de Búsqueda (Con sombra)
+        self.search_container = QWidget()
+        search_lay = QHBoxLayout(self.search_container)
+        search_lay.setContentsMargins(2, 2, 2, 2)
+        search_lay.setSpacing(12)
+
         self.ed_filter = QLineEdit()
-        self.ed_filter.setPlaceholderText("Buscar por nombre o URL…")
-        search_row.addWidget(self.ed_filter, 1)
+        self.ed_filter.setPlaceholderText("Filtrar recursos por nombre o dirección URL…")
+        search_lay.addWidget(self.ed_filter, 1)
+        
         self.cmb_group = QComboBox()
-        self.cmb_group.addItems(["Todos", "Manuales", "Documentación", "Otros"])
-        self.cmb_group.setFixedWidth(130)
-        search_row.addWidget(self.cmb_group, 0)
-        main.addLayout(search_row, 0)
+        self.cmb_group.addItems(["Todos los Grupos", "Manuales", "Documentación", "Otros"])
+        self.cmb_group.setFixedWidth(180)
+        search_lay.addWidget(self.cmb_group, 0)
+        
+        main.addWidget(self.search_container)
 
-        # 3. Table expanding fully
+        # 3. Tabla de Recursos
         self.table = QTableWidget(0, 2)
-        self.table.setHorizontalHeaderLabels(["Nombre", "URL"])
+        self.table.setHorizontalHeaderLabels(["NOMBRE DEL RECURSO", "DIRECCIÓN URL"])
         self.table.verticalHeader().setVisible(False)
         self.table.setShowGrid(False)
-        self.table.setAlternatingRowColors(False)
         self.table.setSelectionBehavior(QTableWidget.SelectRows)
         self.table.setSelectionMode(QTableWidget.SingleSelection)
         self.table.setEditTriggers(QTableWidget.NoEditTriggers)
+        
         hdr = self.table.horizontalHeader()
         hdr.setSectionResizeMode(0, QHeaderView.Stretch)
         hdr.setSectionResizeMode(1, QHeaderView.Stretch)
+        
         main.addWidget(self.table, 1)
 
-        # 4. Buttons aligned right
+        # 4. Botonera Inferior
         btn_row = QHBoxLayout()
-        btn_row.setSpacing(8)
+        btn_row.setSpacing(12)
         btn_row.addStretch(1)
-        self.btn_open = QPushButton("Abrir")
+        
         self.btn_copy = QPushButton("Copiar URL")
+        self.btn_open = QPushButton("Abrir Recurso")
+        self.btn_open.setFixedWidth(150)
+        
+        btn_row.addWidget(self.btn_copy)
+        btn_row.addWidget(self.btn_open)
+        main.addLayout(btn_row)
+
+        # Conexiones
         self.btn_open.clicked.connect(self._open_link)
         self.btn_copy.clicked.connect(self._copy_link)
-        btn_row.addWidget(self.btn_open, 0)
-        btn_row.addWidget(self.btn_copy, 0)
-        main.addLayout(btn_row, 0)
-
-        # 5. Footer: left Hecho por, right Iniciar con Windows
-        footer_row = QHBoxLayout()
-        footer_row.setSpacing(8)
-        self.footer_lbl = QLabel("Hecho por: Iván Martínez")
-        footer_row.addWidget(self.footer_lbl, 0, Qt.AlignLeft)
-        footer_row.addStretch(1)
-        self.chk_startup = ModernCheckBox("Iniciar con Windows")
-        footer_row.addWidget(self.chk_startup, 0, Qt.AlignRight)
-        main.addLayout(footer_row, 0)
+        self.ed_filter.textChanged.connect(self._on_filter)
 
         self.set_theme(self._theme)
         self._seed_demo()
 
-    def _get_status_bus(self):
-        win = self.window()
-        return getattr(win, "status_bus", None)
+    def set_theme(self, theme: dict) -> None:
+        self._theme = theme or {}
+        t = self._theme
+        
+        # Sombra sutil al buscador
+        apply_shadow(self.search_container, blur=15, y=2, rgba=(0,0,0,80))
+
+        # Estilo de inputs
+        input_css = f"""
+            QLineEdit, QComboBox {{
+                background: {t['app_bg']};
+                color: {t['text']};
+                border: 1px solid {t['card_border']};
+                border-radius: 12px;
+                padding: 10px 14px;
+                font-size: 13px;
+            }}
+            QLineEdit:focus {{ border: 1px solid {t['orange']}; }}
+        """
+        self.ed_filter.setStyleSheet(input_css)
+        self.cmb_group.setStyleSheet(input_css)
+
+        # Estilo de Tabla Premium
+        self.table.setStyleSheet(f"""
+            QTableWidget {{
+                background: {t['card_bg']};
+                color: {t['text']};
+                border: 1px solid {t['card_border']};
+                border-radius: 16px;
+                gridline-color: transparent;
+                outline: 0;
+            }}
+            QHeaderView::section {{
+                background: transparent;
+                color: {t['muted']};
+                border: 0;
+                border-bottom: 1px solid {t['card_border']};
+                padding: 12px;
+                font-weight: 800;
+                font-size: 10px;
+                text-transform: uppercase;
+            }}
+            QTableWidget::item {{
+                padding: 14px;
+                border-bottom: 1px solid {t['app_bg']};
+            }}
+            QTableWidget::item:selected {{
+                background: {t['surface_raised']};
+                color: {t['orange']};
+                font-weight: bold;
+            }}
+        """)
+
+        # Botones
+        btn_css = f"""
+            QPushButton {{
+                background: {t['surface_raised']};
+                color: {t['text']};
+                border: 1px solid {t['card_border']};
+                border-radius: 14px;
+                padding: 10px 24px;
+                font-weight: 700;
+            }}
+            QPushButton:hover {{
+                background: {t['orange']};
+                color: #000000;
+            }}
+        """
+        self.btn_open.setStyleSheet(btn_css)
+        self.btn_copy.setStyleSheet(btn_css)
+
+    def _on_filter(self):
+        txt = self.ed_filter.text().lower()
+        for i in range(self.table.rowCount()):
+            name = self.table.item(i, 0).text().lower()
+            url = self.table.item(i, 1).text().lower()
+            self.table.setRowHidden(i, txt not in name and txt not in url)
 
     def _get_selected_url(self) -> tuple[str | None, str | None]:
         row = self.table.currentRow()
-        if row < 0:
-            return None, None
-        name_item = self.table.item(row, 0)
-        url_item = self.table.item(row, 1)
-        if url_item is None:
-            return None, None
-        name = name_item.text().strip() if name_item else ""
-        url = url_item.text().strip() if url_item else ""
-        return name or None, url or None
+        if row < 0: return None, None
+        return self.table.item(row, 0).text(), self.table.item(row, 1).text()
 
     def _open_link(self) -> None:
         name, url = self._get_selected_url()
-        if not url:
-            status_bus = self._get_status_bus()
-            if status_bus:
-                status_bus.notify("warning", "Links", "Seleccione un link primero.", 4000)
-            return
-        try:
-            webbrowser.open(url)
-            status_bus = self._get_status_bus()
-            if status_bus:
-                status_bus.set_status(f"Abrir: {name or url}")
-                status_bus.notify("success", "Links", "URL abierta en el navegador.", 3000)
-        except Exception as e:
-            status_bus = self._get_status_bus()
-            if status_bus:
-                status_bus.set_status("")
-                status_bus.notify("error", "Links", f"No se pudo abrir la URL:\n{e}", 5000)
+        if not url: return
+        webbrowser.open(url)
+        sb = self._get_status_bus()
+        if sb: sb.notify("success", "Navegador", f"Abriendo: {name}", 2000)
 
     def _copy_link(self) -> None:
-        name, url = self._get_selected_url()
-        if not url:
-            status_bus = self._get_status_bus()
-            if status_bus:
-                status_bus.notify("warning", "Links", "Seleccione un link primero.", 4000)
-            return
-        try:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(url)
-            status_bus = self._get_status_bus()
-            if status_bus:
-                status_bus.set_status("URL copiada al portapapeles")
-                status_bus.notify("success", "Links", "URL copiada.", 3000)
-        except Exception as e:
-            status_bus = self._get_status_bus()
-            if status_bus:
-                status_bus.set_status("")
-                status_bus.notify("error", "Links", f"No se pudo copiar:\n{e}", 5000)
+        _, url = self._get_selected_url()
+        if not url: return
+        QApplication.clipboard().setText(url)
+        sb = self._get_status_bus()
+        if sb: sb.notify("success", "Portapapeles", "URL copiada correctamente", 2000)
+
+    def _get_status_bus(self):
+        return getattr(self.window(), "status_bus", None)
 
     def _seed_demo(self) -> None:
         demo = [
             ("Manual App Mobile", "https://cdst-ar.github.io/ST/appmobile"),
-            ("Instructivos contadores/ST", "https://sites.google.com/…/calendarict"),
-            ("Manuales Impresoras", "https://drive.google.com/drive/folders/…"),
-            ("Envios Credifin", "https://docs.google.com/spreadsheets/…"),
+            ("Instructivos Contadores/ST", "https://sites.google.com/view/calendarict"),
+            ("Manuales Impresoras", "https://drive.google.com/drive/folders/backup"),
+            ("Envíos Logística", "https://docs.google.com/spreadsheets/logs"),
         ]
         self.table.setRowCount(len(demo))
         for r, (name, url) in enumerate(demo):
             self.table.setItem(r, 0, QTableWidgetItem(name))
             self.table.setItem(r, 1, QTableWidgetItem(url))
-
-    def set_theme(self, theme: dict) -> None:
-        self._theme = theme or {}
-        t = self._theme
-
-        self._title_lbl.setStyleSheet(
-            f"color: {t.get('text', '#EAEAEA')}; background: transparent; border: none;"
-        )
-
-        qss_inputs = _inputs_qss(t)
-        self.ed_filter.setStyleSheet(qss_inputs)
-        self.cmb_group.setStyleSheet(qss_inputs)
-
-        self.table.setStyleSheet(_table_qss(t))
-
-        btn_qss = _small_btn_qss(t)
-        self.btn_open.setStyleSheet(btn_qss)
-        self.btn_copy.setStyleSheet(btn_qss)
-
-        muted = t.get("muted", "#B8B8B8")
-        self.footer_lbl.setStyleSheet(f"color: {muted}; background: transparent; border: none;")
-        self.chk_startup.set_theme(t)

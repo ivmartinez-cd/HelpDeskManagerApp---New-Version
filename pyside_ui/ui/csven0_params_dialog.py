@@ -27,6 +27,7 @@ class CsvEn0ParamsDialog(BaseProDialog):
         *,
         default_in_path: str | None = None,
         default_out_dir: str | None = None,
+        default_nombre_cliente: str | None = None,
         theme: Optional[dict] = None,
     ):
         super().__init__(
@@ -42,9 +43,9 @@ class CsvEn0ParamsDialog(BaseProDialog):
         self._result: Optional[CsvEn0Params] = None
 
         form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setHorizontalSpacing(14)
-        form.setVerticalSpacing(10)
+        form.setContentsMargins(10, 10, 10, 10)
+        form.setHorizontalSpacing(30) # ✅ Más espacio para que la etiqueta no choque
+        form.setVerticalSpacing(20)   # ✅ Más aire entre filas
 
         # CSV entrada
         self.csv_picker = FolderPickerRow(
@@ -69,6 +70,8 @@ class CsvEn0ParamsDialog(BaseProDialog):
         self.ed_cliente = QtWidgets.QLineEdit()
         self.ed_cliente.setPlaceholderText("Ej: Citrusvil")
         self.ed_cliente.setClearButtonEnabled(True)
+        if default_nombre_cliente:
+            self.ed_cliente.setText(default_nombre_cliente)
         form.addRow("Nombre cliente:", self.ed_cliente)
 
         # Carpeta salida
@@ -168,12 +171,14 @@ def ask_csven0_params(
     *,
     default_in_path: str | None = None,
     default_out_dir: str | None = None,
+    default_nombre_cliente: str | None = None,
     theme: Optional[dict] = None,
 ) -> Optional[CsvEn0Params]:
     dlg = CsvEn0ParamsDialog(
         parent,
         default_in_path=default_in_path,
         default_out_dir=default_out_dir,
+        default_nombre_cliente=default_nombre_cliente,
         theme=theme,
     )
     if dlg.exec() == QtWidgets.QDialog.DialogCode.Accepted:

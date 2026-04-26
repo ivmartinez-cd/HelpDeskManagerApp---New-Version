@@ -88,6 +88,8 @@ def procesar_db_a_csv(
     # Leer y unir
     dfs: List[pd.DataFrame] = []
     for path in archivos_db:
+        if not os.path.isfile(path):
+            raise FileNotFoundError(f"No se encontró el archivo de base de datos: {path}")
         with conectar_db(path) as conn:
             if not verificar_estructura(conn):
                 raise RuntimeError(f"Estructura inesperada en DB: {path}")

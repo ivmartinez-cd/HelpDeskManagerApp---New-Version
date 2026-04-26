@@ -33,3 +33,14 @@ _context_repo/
 
 # Cache
 .cache/
+.pytest_cache/
+HelpDeskLauncher/
+build/
+dist/
+*.log
+*.txt
+!CLAUDE.md
+!requirements.txt
+!version_info.txt
+!pyside_ui/assets/*.png
+!pyside_ui/assets/*.ico

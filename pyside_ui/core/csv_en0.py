@@ -39,7 +39,10 @@ def filtrar_falta_contador_csv(
     _validar_fecha_dmy(fecha_nueva)
 
     # Leer CSV
-    datos = pd.read_csv(archivo_csv_entrada, delimiter=delimiter_entrada)
+    try:
+        datos = pd.read_csv(archivo_csv_entrada, delimiter=delimiter_entrada)
+    except Exception as exc:
+        raise ValueError(f"No se pudo leer el CSV de entrada: {exc}") from exc
 
     # Chequeo de columna clave
     if "Tipo" not in datos.columns:

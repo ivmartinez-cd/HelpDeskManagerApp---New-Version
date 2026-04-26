@@ -6,7 +6,7 @@ from typing import Callable, Optional
 
 from PySide6 import QtCore, QtWidgets
 
-from pyside_ui.core.Extraer_ips import generate_ip_ranges
+from pyside_ui.core.extraer_ips import generate_ip_ranges
 from pyside_ui.core.ip_ranges_txt import _find_ipv4, _net24_key, _range24
 
 

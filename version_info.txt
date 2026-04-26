@@ -1,0 +1,28 @@
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(2, 0, 26, 0),
+    prodvers=(2, 0, 26, 0),
+    mask=0x3f,
+    flags=0x0,
+    os=0x4,
+    filetype=0x1,
+    subtype=0x0,
+    date=(0, 0)
+    ),
+  kids=[
+    StringFileInfo(
+      [
+      StringTable(
+        '040904B0',
+        [StringProperty('CompanyName', 'HelpDesk Operations'),
+        StringProperty('FileDescription', 'Smart Launcher for HelpDesk Manager'),
+        StringProperty('FileVersion', '2.0.26'),
+        StringProperty('InternalName', 'launcher'),
+        StringProperty('LegalCopyright', 'Copyright (c) 2026 HelpDesk'),
+        StringProperty('OriginalFilename', 'HelpDeskLauncher.exe'),
+        StringProperty('ProductName', 'HelpDesk Manager'),
+        StringProperty('ProductVersion', '2.0.26')])
+      ]), 
+    VarFileInfo([VarProperty('Translation', [1033, 1200])])
+  ]
+)

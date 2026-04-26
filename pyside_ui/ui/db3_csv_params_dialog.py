@@ -38,9 +38,9 @@ class Db3CsvParamsDialog(BaseProDialog):
         theme_to_apply = theme if theme else get_theme(parent)
 
         form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setHorizontalSpacing(14)
-        form.setVerticalSpacing(10)
+        form.setContentsMargins(10, 10, 10, 10)
+        form.setHorizontalSpacing(30)
+        form.setVerticalSpacing(20)
 
         self.ed_fecha = QtWidgets.QLineEdit()
         self.ed_fecha.setPlaceholderText("DD/MM/AAAA (opcional)")

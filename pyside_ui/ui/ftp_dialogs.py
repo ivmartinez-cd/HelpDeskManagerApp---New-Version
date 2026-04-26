@@ -81,7 +81,7 @@ class _CredsDialog(BaseProDialog):
     ):
         super().__init__(parent, title, subtitle, w=620)
 
-        card = make_card()
+        card = make_card(self)
         card_lay = QtWidgets.QVBoxLayout(card)
         card_lay.setContentsMargins(14, 12, 14, 12)
         card_lay.setSpacing(10)
@@ -95,8 +95,8 @@ class _CredsDialog(BaseProDialog):
         if cliente_readonly:
             self._cliente.setToolTip("El nombre del cliente no se puede editar.")
 
-        def row(label: str, widget: QtWidgets.QWidget) -> QtWidgets.QWidget:
-            w = QtWidgets.QWidget()
+        def row(label: str, widget: QtWidgets.QWidget, parent: QtWidgets.QWidget) -> QtWidgets.QWidget:
+            w = QtWidgets.QWidget(parent)
             l = QtWidgets.QHBoxLayout(w)
             l.setContentsMargins(0, 0, 0, 0)
             l.setSpacing(12)
@@ -106,9 +106,9 @@ class _CredsDialog(BaseProDialog):
             l.addWidget(widget, 1)
             return w
 
-        card_lay.addWidget(row("Cliente", self._cliente))
-        card_lay.addWidget(row("Usuario", self._user))
-        card_lay.addWidget(row("Password", self._pass))
+        card_lay.addWidget(row("Cliente", self._cliente, card))
+        card_lay.addWidget(row("Usuario", self._user, card))
+        card_lay.addWidget(row("Password", self._pass, card))
 
         btn_ok, btn_cancel, row_btns = make_button_row(ok_text="Aceptar", cancel_text="Cancelar", ok_object_name="Primary")
         btn_cancel.clicked.connect(self.reject)
@@ -130,7 +130,7 @@ class _CredsDialog(BaseProDialog):
         if not user:
             warn(self, "Dato faltante", "El campo 'Usuario' es obligatorio.")
             return
-        if password == "":
+        if not self._pass.text().strip():
             warn(self, "Dato faltante", "El campo 'Password' es obligatorio.")
             return
 

@@ -39,9 +39,9 @@ class AutoestimacionDialog(BaseProDialog):
         self._result: Optional[AutoestimacionParams] = None
 
         form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setHorizontalSpacing(14)
-        form.setVerticalSpacing(10)
+        form.setContentsMargins(10, 10, 10, 10)
+        form.setHorizontalSpacing(30)
+        form.setVerticalSpacing(20)
 
         # CSV entrada
         self.csv_picker = FolderPickerRow(

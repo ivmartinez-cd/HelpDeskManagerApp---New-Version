@@ -43,9 +43,9 @@ class SumaFijaParamsDialog(BaseProDialog):
         self._result: Optional[SumaFijaParams] = None
 
         form = QtWidgets.QFormLayout()
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setHorizontalSpacing(14)
-        form.setVerticalSpacing(10)
+        form.setContentsMargins(10, 10, 10, 10)
+        form.setHorizontalSpacing(30)
+        form.setVerticalSpacing(20)
 
         # -------- Archivos (multi) --------
         self.ed_files = QtWidgets.QLineEdit()
@@ -64,7 +64,7 @@ class SumaFijaParamsDialog(BaseProDialog):
         row_files.addWidget(self.ed_files, 1)
         row_files.addWidget(btn_pick_files, 0)
 
-        wrap_files = QtWidgets.QWidget()
+        wrap_files = QtWidgets.QWidget(self)
         wrap_files.setObjectName("RowWrapTransparent")
         wrap_files.setLayout(row_files)
         wrap_files.setAttribute(QtCore.Qt.WidgetAttribute.WA_StyledBackground, True)

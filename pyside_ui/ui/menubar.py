@@ -14,6 +14,12 @@ def build_menubar(win, on_noop) -> None:
     - Los únicos toasts deben salir por confirmación (éxito/error) desde el controller.
     """
     mb: QMenuBar = win.menuBar()
+    
+    # ✅ Blindaje de fuente para el menú
+    from PySide6.QtGui import QFont
+    m_font = QFont("Segoe UI", 10)
+    m_font.setPointSizeF(10)
+    mb.setFont(m_font)
 
     # Archivo
     m_archivo = mb.addMenu("Archivo")

@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict
 
-from PySide6 import QtWidgets
+from PySide6 import QtWidgets, QtGui
 from PySide6.QtCore import Qt, QPoint
 
 
@@ -29,12 +29,6 @@ def get_theme(parent: QtWidgets.QWidget) -> Dict[str, str]:
 
 
 def resolve_theme(theme: dict) -> DialogTheme:
-    """
-    Keys reales esperadas:
-      - app_bg, text, muted, orange
-      - card_bg, card_border
-      - btn_bg, btn_hover
-    """
     card_bg = theme.get("card_bg", DialogTheme.panel_bg)
     btn_bg = theme.get("btn_bg", card_bg)
 
@@ -51,6 +45,9 @@ def resolve_theme(theme: dict) -> DialogTheme:
 
 def apply_dialog_style(widget: QtWidgets.QWidget, theme: dict) -> None:
     t = resolve_theme(theme)
+    dialog_bg = theme.get("card_bg", "#1A1A1A")
+    danger = theme.get("danger", "#E81123")
+    
     widget.setStyleSheet(
         f"""
         QDialog {{
@@ -58,94 +55,100 @@ def apply_dialog_style(widget: QtWidgets.QWidget, theme: dict) -> None:
             color: {t.text};
         }}
 
-        /* ✅ Labels: SIEMPRE con color (evita que vuelvan a negro) */
         QLabel {{
             background: transparent;
             color: {t.text};
         }}
         QLabel#Subtitle {{
             color: {t.muted};
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 400;
         }}
 
         QLineEdit, QComboBox {{
-            background: {t.panel_bg};
+            background: {t.app_bg};
             border: 1px solid {t.border};
-            border-radius: 10px;
-            padding: 8px 10px;
+            border-radius: 12px;
+            padding: 10px 14px;
             color: {t.text};
+            font-size: 13px;
         }}
         QLineEdit:focus, QComboBox:focus {{
             border: 1px solid {t.orange};
+            background: {t.panel_bg};
         }}
 
         QListWidget {{
             background: {t.panel_bg};
             border: 1px solid {t.border};
-            border-radius: 12px;
-            padding: 6px;
+            border-radius: 16px;
+            padding: 8px;
         }}
         QListWidget::item {{
-            padding: 8px 10px;
+            padding: 10px 14px;
             border-radius: 10px;
             color: {t.text};
         }}
-        QListWidget::item:hover {{
-            background: {t.panel_bg2};
-        }}
         QListWidget::item:selected {{
             background: {t.panel_bg2};
-            color: {t.text};
+            color: {t.orange};
+            font-weight: bold;
         }}
 
         QPushButton {{
             background: {t.panel_bg};
             border: 1px solid {t.border};
-            border-radius: 12px;
-            padding: 8px 14px;
+            border-radius: 14px;
+            padding: 10px 20px;
             color: {t.text};
+            font-weight: 600;
         }}
         QPushButton:hover {{
             background: {t.panel_bg2};
+            border: 1px solid {t.orange};
         }}
         QPushButton#Primary {{
             background: {t.orange};
             border: 1px solid {t.orange};
-            color: #111111;
-            font-weight: 700;
+            color: #000000;
+            font-weight: 800;
+        }}
+        QPushButton#Primary:hover {{
+            background: #FFB35C;
         }}
         QPushButton#Danger {{
-            background: {t.panel_bg2};
-            border: 1px solid {t.orange};
-            color: {t.text};
-            font-weight: 700;
+            background: transparent;
+            border: 1px solid #EF4444;
+            color: #EF4444;
         }}
 
         QFrame#Card {{
-            background: {theme.get("card_bg", "#2A2A2A")};
+            background-color: {dialog_bg};
             border: 1px solid {t.border};
-            border-radius: 16px;
+            border-radius: 20px;
         }}
 
         QWidget#ProTitleBar {{
-            background: {theme.get("card_bg", "#2A2A2A")};
+            background: transparent;
             border-bottom: 1px solid {t.border};
         }}
         QLabel#ProTitle {{
             background: transparent;
             color: {t.text};
-            font-weight: 700;
+            font-size: 16px;
+            font-weight: 800;
         }}
         QToolButton#ProClose {{
             background: transparent;
-            border: 1px solid {t.border};
-            border-radius: 10px;
-            padding: 6px 10px;
+            border: none;
+            border-radius: 12px;
+            padding: 8px;
             color: {t.text};
+            font-size: 14px;
         }}
         QToolButton#ProClose:hover {{
-            background: {t.panel_bg2};
-            border: 1px solid {t.orange};
+            background: {danger};
+            color: white;
         }}
         """
     )
@@ -158,8 +161,8 @@ def make_subtitle(subtitle: str) -> QtWidgets.QLabel:
     return sub_lbl
 
 
-def make_card() -> QtWidgets.QFrame:
-    card = QtWidgets.QFrame()
+def make_card(parent: QtWidgets.QWidget | None = None) -> QtWidgets.QFrame:
+    card = QtWidgets.QFrame(parent)
     card.setObjectName("Card")
     return card
 
@@ -190,7 +193,7 @@ class BaseProDialog(QtWidgets.QDialog):
             self.setMinimumHeight(h)
 
         self.setWindowFlags(self.windowFlags() | Qt.FramelessWindowHint)
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setAttribute(Qt.WA_TranslucentBackground, False) # ✅ Quitamos transparencia de ventana
 
         self._theme_dict = get_theme(parent)
         apply_dialog_style(self, self._theme_dict)
@@ -202,14 +205,14 @@ class BaseProDialog(QtWidgets.QDialog):
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
 
-        self._shell = make_card()
+        self._shell = make_card(self)
         outer.addWidget(self._shell)
 
         shell_lay = QtWidgets.QVBoxLayout(self._shell)
         shell_lay.setContentsMargins(16, 0, 16, 16)
         shell_lay.setSpacing(12)
 
-        tb = QtWidgets.QWidget()
+        tb = QtWidgets.QWidget(self._shell)
         tb.setObjectName("ProTitleBar")
         tb_lay = QtWidgets.QHBoxLayout(tb)
         tb_lay.setContentsMargins(16, 12, 12, 12)
@@ -217,8 +220,14 @@ class BaseProDialog(QtWidgets.QDialog):
 
         self._title_lbl = QtWidgets.QLabel(title)
         self._title_lbl.setObjectName("ProTitle")
+        font_title = QtGui.QFont("Segoe UI Variable Display", 15, QtGui.QFont.Weight.Bold)
+        font_title.setPointSizeF(15) # ✅ Blindaje anti-warning
+        self._title_lbl.setFont(font_title)
 
         btn_close = QtWidgets.QToolButton()
+        font_c = QtGui.QFont("Segoe UI", 10)
+        font_c.setPointSizeF(10)
+        btn_close.setFont(font_c)
         btn_close.setObjectName("ProClose")
         btn_close.setText("✕")
         btn_close.clicked.connect(self.reject)

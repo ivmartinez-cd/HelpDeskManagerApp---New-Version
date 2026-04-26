@@ -8,11 +8,11 @@ import re
 
 from PySide6 import QtCore, QtWidgets
 
-from pyside_ui.core.Db3ToCsv import procesar_db_a_csv
-from pyside_ui.core.CsvEn0 import filtrar_falta_contador_csv
+from pyside_ui.core.db3_to_csv import procesar_db_a_csv
+from pyside_ui.core.csv_en0 import filtrar_falta_contador_csv
 from pyside_ui.ui.csven0_params_dialog import ask_csven0_params
 
-from pyside_ui.core.Clientes_suma import convertir_xls_a_csv_arcos_headless
+from pyside_ui.core.clientes_suma import convertir_xls_a_csv_arcos_headless
 from pyside_ui.ui.suma_fija_params_dialog import ask_suma_fija_params
 
 # ✅ Estimador manual (ventana no-modal always-on-top)
@@ -20,7 +20,7 @@ from pyside_ui.ui.estimador_manual_dialog import EstimadorManualDialog
 
 from pyside_ui.ui.ftp_client_picker import FtpClientPickerDialog
 from pyside_ui.ui.db3_csv_params_dialog import ask_db3_csv_params
-from pyside_ui.core.Autoestim import ejecutar_generacion_dos_csv
+from pyside_ui.core.autoestim import ejecutar_generacion_dos_csv
 from pyside_ui.ui.autoestimacion_dialog import AutoestimacionDialog
 
 
@@ -133,8 +133,7 @@ class ContadoresController(QtCore.QObject):
         except Exception:
             db3_dir = None
 
-        self._run_db3_to_csv_flow(list(archivos), db3_download_dir=db3_dir)
-        return True
+        return self._run_db3_to_csv_flow(list(archivos), db3_download_dir=db3_dir)
 
     def _run_db3_to_csv_flow(
         self,
@@ -186,6 +185,7 @@ class ContadoresController(QtCore.QObject):
             self._parent,
             default_in_path=self._last_en0_csv_in or None,
             default_out_dir=self._last_en0_out_dir or None,
+            default_nombre_cliente=self._last_en0_cliente or None,
             theme=self._get_theme(),
         )
         if not params:
@@ -303,8 +303,8 @@ class ContadoresController(QtCore.QObject):
             res = self._ftp.download_many_db3(cfg_map=cfg_map, cliente=cliente, dest_dir=str(dest_dir), status_cb=None)
             local_path = Path(res.local_path)
             self._status_cb("")
-            self._notify("success", "FTP", f"Descarga exitosa: {local_path.name}", 3500)
-            QtCore.QTimer.singleShot(3500, lambda: self._run_db3_to_csv_flow([local_path], db3_download_dir=local_path.parent))
+            self._notify("success", "FTP", f"Descarga exitosa: {local_path.name}", 2000)
+            QtCore.QTimer.singleShot(1500, lambda: self._run_db3_to_csv_flow([local_path], db3_download_dir=local_path.parent))
         except FileNotFoundError:
             self._status_cb("")
             self._notify("warning", "FTP", "No hay archivos DB3 disponibles.", 3500)

@@ -9,43 +9,12 @@ from typing import Optional
 from PySide6 import QtCore, QtGui, QtWidgets
 
 from pyside_ui.ui.dialog_kit import BaseProDialog, apply_dialog_style, get_theme, warn
-
-
-# =====================
-# Lógica (Qt-agnóstica)
-# =====================
-
-def dias_360(fecha_inicial: datetime, fecha_final: datetime) -> int:
-    di, mi, yi = fecha_inicial.day, fecha_inicial.month, fecha_inicial.year
-    df, mf, yf = fecha_final.day, fecha_final.month, fecha_final.year
-    if di == 31:
-        di = 30
-    if df == 31 and di >= 30:
-        df = 30
-    return (yf - yi) * 360 + (mf - mi) * 30 + (df - di)
-
-
-def parse_fecha_ddmmyyyy(s: str) -> datetime:
-    return datetime.strptime(s.strip(), "%d/%m/%Y")
-
-
-def calcular_impresiones_mensuales(impresiones_diarias: float) -> float:
-    return round(impresiones_diarias * 30, 2)
-
-
-def calcular_resultado_estimacion(contador_final: int, impresiones_diarias: float, dias_estimacion: int):
-    contador_estimado = math.ceil(contador_final + (impresiones_diarias * dias_estimacion))
-    impresiones_estimadas = math.ceil(impresiones_diarias * dias_estimacion)
-    return contador_estimado, impresiones_estimadas
-
-
-@dataclass(frozen=True)
-class EstimadorManualResult:
-    contador_estimado: int
-    impresiones_estimadas: int
-    impresiones_diarias: float
-    impresiones_mensuales: float
-    dias_estimacion: int
+from pyside_ui.core.estimador_manual import (
+    dias_360,
+    parse_fecha_ddmmyyyy,
+    calcular_impresiones_mensuales,
+    calcular_resultado_estimacion,
+)
 
 
 class EstimadorManualDialog(BaseProDialog):
@@ -117,7 +86,11 @@ class EstimadorManualDialog(BaseProDialog):
             my_geo.moveCenter(center)
 
             target = my_geo.topLeft()
-            target.setY(target.y() + 120)  # 👈 bajá la ventana (ajustá si querés)
+            try:
+                dpi_ratio = screen.logicalDotsPerInch() / 96.0
+            except Exception:
+                dpi_ratio = 1.0
+            target.setY(target.y() + int(120 * dpi_ratio))
 
             # clamp para que siempre quede dentro del área visible
             w = self.width() or my_geo.width()
@@ -144,9 +117,9 @@ class EstimadorManualDialog(BaseProDialog):
             }}
         """)
         lay = QtWidgets.QGridLayout(gb)
-        lay.setContentsMargins(14, 12, 14, 12)
-        lay.setHorizontalSpacing(12)
-        lay.setVerticalSpacing(10)
+        lay.setContentsMargins(20, 16, 20, 16)
+        lay.setHorizontalSpacing(20)
+        lay.setVerticalSpacing(16)
         return gb
 
     def _build_inputs_section(self) -> None:

@@ -37,12 +37,18 @@ class FolderPickerRow(QtWidgets.QWidget):
         lay.setSpacing(0)
 
         self._line_edit = QtWidgets.QLineEdit()
+        font_edit = QtGui.QFont("Segoe UI", 10)
+        font_edit.setPointSizeF(10)
+        self._line_edit.setFont(font_edit)
         self._line_edit.setPlaceholderText(placeholder)
         self._line_edit.setClearButtonEnabled(True)
         if initial_value:
             self._line_edit.setText(initial_value)
 
         btn = QtWidgets.QPushButton("Elegir…")
+        font_btn = QtGui.QFont("Segoe UI", 10, QtGui.QFont.Weight.Bold)
+        font_btn.setPointSizeF(9.5)
+        btn.setFont(font_btn)
         btn.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
         btn.clicked.connect(self._on_pick)
 
@@ -60,11 +66,30 @@ class FolderPickerRow(QtWidgets.QWidget):
             QWidget#FolderPickerWrap {{
                 background: {panel_bg};
                 border: 1px solid {border};
-                border-radius: 10px;
+                border-radius: 12px;
+                margin: 2px 0;
             }}
             QWidget#FolderPickerWrap QLineEdit {{
                 background: transparent;
                 border: none;
+                padding: 8px 12px;
+                color: {self._theme.get('text', '#F5F5F5')};
+            }}
+            QWidget#FolderPickerWrap QPushButton {{
+                background: {self._theme.get('surface_raised', '#333333')};
+                border: none;
+                border-left: 1px solid {border};
+                border-top-left-radius: 0px;
+                border-bottom-left-radius: 0px;
+                border-top-right-radius: 12px;
+                border-bottom-right-radius: 12px;
+                padding: 8px 16px;
+                color: {self._theme.get('text', '#F5F5F5')};
+                font-weight: 600;
+            }}
+            QWidget#FolderPickerWrap QPushButton:hover {{
+                background: {self._theme.get('orange', '#FF9A2E')};
+                color: black;
             }}
             """
         )
