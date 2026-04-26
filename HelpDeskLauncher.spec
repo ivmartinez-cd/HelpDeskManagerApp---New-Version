@@ -1,17 +1,18 @@
 import os
+from PyInstaller.utils.hooks import collect_submodules
 # -*- mode: python ; coding: utf-8 -*-
 
 
 a = Analysis(
-    ['launcher.py'],
+    ['HelpDeskLauncher.py'],
     pathex=[],
     binaries=[],
-    datas=[('pyside_ui/assets/ico.png', 'pyside_ui/assets')],
-    hiddenimports=['pandas', 'numpy', 'openpyxl', 'PIL', 'scipy', 'lxml', 'scapy', 'geopy', 'requests'],
+    datas=[('pyside_ui/assets/ico.png', 'pyside_ui/assets'), ('version.json', '.')],
+    hiddenimports=['pandas', 'numpy', 'openpyxl', 'PIL', 'scipy', 'lxml', 'scapy', 'geopy', 'requests', *collect_submodules('pyside_ui')],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['torch', 'sympy', 'matplotlib', 'notebook', 'jedi', 'pyside_ui'],
+    excludes=['torch', 'sympy', 'matplotlib', 'notebook', 'jedi'],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

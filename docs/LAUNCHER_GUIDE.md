@@ -1,57 +1,48 @@
-# 🚀 Guía del Sistema de Smart Launcher y Actualizaciones (v2.0.6)
+# Guia del Sistema de Launcher y Actualizaciones (2026)
 
-Esta guía explica cómo funciona el sistema de distribución de **HelpDesk Manager 2026** diseñado para entornos de red con NAS.
+Esta guia describe el launcher actual de **HelpDesk Manager 2026** para entornos con NAS, cache local y tolerancia a modo offline.
 
-## 📂 Componentes del Sistema
+## Componentes del sistema
 
-1.  **`HelpDeskLauncher.exe`**: El ejecutable estable que entregas al usuario. Se encuentra en `dist/HelpDeskLauncher`.
-2.  **`_internal/`**: Carpeta que acompaña al EXE y contiene el motor de Python y las librerías (`PySide6`, `pandas`, etc.).
-3.  **`deploy.py`**: Herramienta del administrador para publicar nuevas versiones. Incrementa la versión (ej: `2.0.5 -> 2.0.6`).
-4.  **`AppData/Local/HelpDeskManagerApp`**: Carpeta oculta en el PC del usuario donde se descarga el código actualizado del NAS.
+1. **`HelpDeskLauncher.exe`**: ejecutable estable que entregas al usuario. Vive en `dist/HelpDeskLauncher`.
+2. **`_internal/`**: runtime empaquetado por PyInstaller.
+3. **`launcher.py`**: implementacion real del launcher.
+4. **`HelpDeskLauncher.py`**: entrypoint fino para PyInstaller.
+5. **`deploy.py`**: publica nuevas versiones en el NAS.
+6. **`%LOCALAPPDATA%/HelpDeskManagerApp`**: cache local con la version descargada.
 
----
+## Como funciona la autoactualizacion
 
-## 🛠️ Cómo funciona la Auto-Actualización
+El sistema separa el runtime del codigo actualizable. Esto permite publicar cambios frecuentes sin redistribuir el `.exe` en cada iteracion.
 
-El sistema separa el **Motor** (el EXE) de la **Lógica** (los archivos .py). Esto permite actualizar la app sin tener que reenviar el archivo `.exe` a los usuarios.
+1. El usuario abre `HelpDeskLauncher.exe`.
+2. El launcher verifica `version.json` en el NAS.
+3. Si encuentra una version mas nueva, sincroniza `NAS/app -> %LOCALAPPDATA%/HelpDeskManagerApp` usando `robocopy`.
+4. Si el NAS no responde, abre la copia local.
+5. Si no existe una copia local valida, el build puede arrancar la version embebida de `pyside_ui`.
 
-1.  El usuario abre `HelpDeskLauncher.exe`.
-2.  El lanzador mira en el **NAS** si hay una versión superior en `version.json`.
-3.  Si la hay, descarga solo los archivos modificados a `%LOCALAPPDATA%/HelpDeskManagerApp`.
-4.  El lanzador arranca la app usando ese código actualizado.
+## Como desplegar una nueva version
 
----
+1. Abre una terminal en la carpeta del proyecto.
+2. Ejecuta `python deploy.py`.
+3. El script incrementa `version.json`, publica el codigo en el NAS y luego copia el `version.json` raiz como disparador de actualizacion.
 
-## 🚀 Cómo Desplegar una Nueva Versión (Tu flujo de trabajo)
+## Cuando reconstruir el launcher
 
-Cuando hayas hecho cambios en el código (en la carpeta `pyside_ui/`):
+Ejecuta `python build_launcher.py` cuando:
 
-1.  Abre una terminal en la carpeta del proyecto.
-2.  Ejecuta: `python deploy.py`.
-3.  El script hará lo siguiente:
-    *   Incrementará la versión (ej: de `2.0.6` a `2.0.7`).
-    *   Subirá el código al NAS.
-    *   **¡Listo!** La próxima vez que un usuario abra su lanzador, verá el aviso de actualización.
+- agregues nuevas dependencias del runtime
+- cambies icono o branding del `.exe`
+- modifiques el propio launcher
 
----
+Para cambios solo en la UI o logica de `pyside_ui`, normalmente alcanza con `deploy.py`.
 
-## 📦 Cuándo reconstruir el Lanzador (EXE)
-
-Solo necesitas ejecutar `python build_launcher.py` si:
-- Instalas una **nueva librería** de Python que la app no usaba antes.
-- Quieres cambiar el **Icono** del archivo `.exe`.
-- Quieres cambiar el nombre del ejecutable.
-
-Para cambios en la interfaz o lógica, **SOLO necesitas usar `deploy.py`**.
-
----
-
-## ⚠️ Solución de Problemas y Logs
+## Logs y diagnostico
 
 Si algo falla, revisa estos archivos en `%LOCALAPPDATA%/HelpDeskManagerApp`:
-- **`launcher_debug.log`**: Registro de lo que hizo el lanzador.
-- **`crash_launcher.txt`**: Error fatal si el lanzador no puede ni siquiera arrancar.
-- **`crash_app.txt`**: Error fatal dentro de la aplicación principal.
 
----
-*Documentación actualizada para HelpDesk Manager v2.0.6*
+- `launcher_debug.log`: decisiones del launcher, sync y arranque.
+- `crash_launcher.txt`: fallo fatal en bootstrap.
+- `crash_app.txt`: fallo fatal dentro de la app principal.
+
+Este launcher prioriza arranque confiable, trazabilidad y recuperacion offline.
